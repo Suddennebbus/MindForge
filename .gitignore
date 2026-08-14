@@ -1,0 +1,27 @@
+# ── 开发工具链资产（不属于产品，永不提交）──
+.agents/
+.claude/
+.superpowers/
+.serena/
+skills-lock.json
+backend/.agents/
+backend/.claude/
+backend/skills-lock.json
+
+# ── 私有文档与参考素材 ──
+docs/superpowers/
+docs/llm-wiki-aisafty.md
+docs/五小申报资料*
+/mindforge*.png
+/mindforge*.jpeg
+/mindforge-dev-log*
+/tasteskill-frontend-redesign
+
+# ── 运行时数据 ──
+backend/data/
+.pytest_cache/
+
+# ── 测试产物 ──
+frontend/test-results/
+frontend/e2e/screenshots/
+frontend/src/test-write.txt

@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-base text-text-primary font-sans antialiased;
+  }
+
+  ::selection {
+    background-color: rgba(34, 211, 238, 0.25);
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto max-w-page px-5 sm:px-8;
+  }
+}

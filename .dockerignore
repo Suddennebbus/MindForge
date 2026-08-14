@@ -1,0 +1,33 @@
+# ── 版本控制与开发资产 ──
+.git/
+.agents/
+.claude/
+.superpowers/
+.serena/
+docs/
+/mindforge*.png
+/mindforge*.jpeg
+/mindforge-dev-log*
+/tasteskill-frontend-redesign
+/skills-lock.json
+/docker-compose.yml
+/README.md
+/LICENSE
+/TRADEMARK.md
+/CONTRIBUTING.md
+
+# ── 后端：数据、密钥、缓存（绝不进镜像）──
+backend/data/
+backend/.env
+backend/.pytest_cache/
+backend/skills-lock.json
+backend/.agents/
+backend/.claude/
+
+# ── 前端：构建中间产物 ──
+frontend/node_modules/
+frontend/dist/
+frontend/e2e/
+frontend/test-results/
+
+**/__pycache__/

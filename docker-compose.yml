@@ -1,0 +1,14 @@
+# Optional convenience wrapper — the image also runs standalone:
+#   docker run -d -p 8080:80 -v mindforge-data:/data mindforge
+services:
+  mindforge:
+    build: .
+    image: mindforge:latest
+    ports:
+      - "8080:80"
+    volumes:
+      - mindforge-data:/data
+    restart: unless-stopped
+
+volumes:
+  mindforge-data:
