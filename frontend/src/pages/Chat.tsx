@@ -6,20 +6,23 @@ import { ChatMessage } from '@/components/ChatMessage'
 import { ChatHistory } from '@/components/ChatHistory'
 import { useSetPageWidth } from '@/components/PageWidth'
 import { toast } from '@/stores/toastStore'
+import { useT, useLangStore } from '@/i18n'
 
 export function Chat() {
+  const t = useT()
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const setWide = useSetPageWidth('wide')
 
   const currentId = useChatStore((s) => s.currentId)
-  const getCurrent = useChatStore((s) => s.getCurrent)
+  const conversations = useChatStore((s) => s.conversations)
   const startNew = useChatStore((s) => s.startNew)
   const addMessage = useChatStore((s) => s.addMessage)
   const updateLastMessage = useChatStore((s) => s.updateLastMessage)
 
-  const conversation = getCurrent()
+  // 直接订阅 conversations，消息更新（如保存到知识库后的 savedPages）才能实时触发重渲染
+  const conversation = conversations.find((c) => c.id === currentId) || null
   const messages = conversation?.messages || []
 
   useEffect(() => {
@@ -49,6 +52,7 @@ export function Chat() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-User-Language': useLangStore.getState().lang,
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ question: userMsg }),
@@ -95,7 +99,7 @@ export function Chat() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       addMessage({ role: 'assistant', content: `Error: ${msg}` })
-      toast({ title: '请求失败', description: msg, variant: 'error' })
+      toast({ title: t('请求失败'), description: t(msg), variant: 'error' })
     }
     setIsLoading(false)
   }
@@ -107,8 +111,8 @@ export function Chat() {
         <div className="flex-1 overflow-auto">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-text-tertiary">
-              <p className="text-base font-medium text-text-secondary mb-1">AI 对话</p>
-              <p className="text-sm">基于当前知识库回答你的问题</p>
+              <p className="text-base font-medium text-text-secondary mb-1">{t('AI 对话')}</p>
+              <p className="text-sm">{t('基于当前知识库回答你的问题')}</p>
             </div>
           ) : (
             <div className="max-w-3xl mx-auto py-5 space-y-1">
@@ -136,7 +140,7 @@ export function Chat() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder="输入问题..."
+              placeholder={t('输入问题...')}
               className="input flex-1"
               disabled={isLoading}
             />

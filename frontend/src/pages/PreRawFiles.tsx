@@ -24,6 +24,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { StatusBadge } from '@/components/StatusBadge'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { toast } from '@/stores/toastStore'
+import { useT } from '@/i18n'
 
 const statusLabel: Record<string, { label: string; variant: 'default' | 'active' | 'success' | 'warning' | 'muted' | 'danger' }> = {
   pending: { label: '待审阅', variant: 'warning' },
@@ -33,6 +34,7 @@ const statusLabel: Record<string, { label: string; variant: 'default' | 'active'
 }
 
 export function PreRawFiles() {
+  const t = useT()
   const [files, setFiles] = useState<RawFile[]>([])
   const [ingestingId, setIngestingId] = useState<string | null>(null)
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
@@ -85,10 +87,10 @@ export function PreRawFiles() {
       setSelectedFile(null)
       setCategory('')
       loadFiles()
-      toast({ title: '上传成功', variant: 'success' })
+      toast({ title: t('上传成功'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '上传失败',
+        title: t('上传失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -100,10 +102,10 @@ export function PreRawFiles() {
     try {
       await api.post(`/raw/pre-raw/${id}/review`)
       loadFiles()
-      toast({ title: '已标记审阅', variant: 'success' })
+      toast({ title: t('已标记审阅'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '审阅标记失败',
+        title: t('审阅标记失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -114,10 +116,10 @@ export function PreRawFiles() {
     try {
       await api.post(`/raw/pre-raw/${id}/reject`)
       loadFiles()
-      toast({ title: '已拒绝', variant: 'success' })
+      toast({ title: t('已拒绝'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '拒绝失败',
+        title: t('拒绝失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -130,10 +132,10 @@ export function PreRawFiles() {
     try {
       await api.post(`/raw/pre-raw/${id}/approve`)
       loadFiles()
-      toast({ title: '已入库', variant: 'success' })
+      toast({ title: t('已入库'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '入库失败',
+        title: t('入库失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -146,10 +148,10 @@ export function PreRawFiles() {
     try {
       await api.delete(`/raw/pre-raw/${deleteTarget.id}`)
       loadFiles()
-      toast({ title: '已删除', variant: 'success' })
+      toast({ title: t('已删除'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '删除失败',
+        title: t('删除失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -189,8 +191,8 @@ export function PreRawFiles() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="待入库资料"
-        description="审阅、批准或拒绝待入库资料。"
+        title={t('待入库资料')}
+        description={t('审阅、批准或拒绝待入库资料。')}
         icon={FilePlus}
         actions={
           canEdit && (
@@ -200,7 +202,7 @@ export function PreRawFiles() {
                 className="btn-primary h-8 px-3 text-xs flex items-center gap-1.5"
               >
                 <Upload size={14} strokeWidth={1.5} />
-                上传
+                {t('上传')}
               </button>
               <input ref={fileInput} type="file" className="hidden" onChange={handleFileSelect} />
             </>
@@ -217,7 +219,7 @@ export function PreRawFiles() {
           }} />
           <div className="relative w-full max-w-md rounded-lg border border-subtle bg-surface shadow-xl p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-text-primary">上传资料</h3>
+              <h3 className="text-sm font-medium text-text-primary">{t('上传资料')}</h3>
               <button
                 onClick={() => {
                   setUploadModalOpen(false)
@@ -235,14 +237,14 @@ export function PreRawFiles() {
             </div>
 
             <div className="mb-4">
-              <label className="block text-[11px] uppercase tracking-wider text-text-tertiary mb-1.5">所属领域（文件夹）</label>
+              <label className="block text-[11px] uppercase tracking-wider text-text-tertiary mb-1.5">{t('所属领域（文件夹）')}</label>
               <div className="relative">
                 <Tag size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
                 <input
                   type="text"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  placeholder="输入文件夹名称（可选），留空存入根目录"
+                  placeholder={t('输入文件夹名称（可选），留空存入根目录')}
                   className="input w-full pl-8"
                 />
               </div>
@@ -250,7 +252,7 @@ export function PreRawFiles() {
                 <div className="mt-2 space-y-2">
                   {preRawCategories.length > 0 && (
                     <div>
-                      <p className="text-xs text-text-muted mb-1.5">待入库已有文件夹：</p>
+                      <p className="text-xs text-text-muted mb-1.5">{t('待入库已有文件夹：')}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {preRawCategories.map((c) => (
                           <button
@@ -270,7 +272,7 @@ export function PreRawFiles() {
                   )}
                   {humanOutputCategories.length > 0 && (
                     <div>
-                      <p className="text-xs text-text-muted mb-1.5">人类产出已有文件夹：</p>
+                      <p className="text-xs text-text-muted mb-1.5">{t('人类产出已有文件夹：')}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {humanOutputCategories.map((c) => (
                           <button
@@ -292,8 +294,8 @@ export function PreRawFiles() {
               )}
               <p className="text-xs text-text-muted mt-1.5">
                 {category.trim()
-                  ? `将存入文件夹：pre_raw/${category.trim()}/`
-                  : '将存入根目录：pre_raw/'}
+                  ? t('将存入文件夹：pre_raw/{cat}/', { cat: category.trim() })
+                  : t('将存入根目录：pre_raw/')}
               </p>
             </div>
 
@@ -306,7 +308,7 @@ export function PreRawFiles() {
                 }}
                 className="btn-ghost h-8 px-3 text-xs"
               >
-                取消
+                {t('取消')}
               </button>
               <button
                 onClick={handleUpload}
@@ -316,12 +318,12 @@ export function PreRawFiles() {
                 {uploading ? (
                   <>
                     <Loader2 size={14} strokeWidth={1.5} className="mr-1.5 animate-spin" />
-                    上传中…
+                    {t('上传中…')}
                   </>
                 ) : (
                   <>
                     <Upload size={14} strokeWidth={1.5} className="mr-1.5" />
-                    确认上传
+                    {t('确认上传')}
                   </>
                 )}
               </button>
@@ -332,8 +334,8 @@ export function PreRawFiles() {
 
       {files.length === 0 ? (
         <EmptyState
-          title="暂无待入库资料"
-          description="上传资料开始审阅流程"
+          title={t('暂无待入库资料')}
+          description={t('上传资料开始审阅流程')}
           icon={FilePlus}
           action={
             canEdit ? (
@@ -342,7 +344,7 @@ export function PreRawFiles() {
                 className="btn-primary h-8 px-3 text-xs flex items-center gap-1.5"
               >
                 <Upload size={14} strokeWidth={1.5} />
-                上传资料
+                {t('上传资料')}
               </button>
             ) : undefined
           }
@@ -351,7 +353,7 @@ export function PreRawFiles() {
         <div className="space-y-3">
           {categories.map((cat) => {
             const isUncategorized = cat === '__uncategorized__'
-            const displayName = isUncategorized ? '根目录' : cat
+            const displayName = isUncategorized ? t('根目录') : cat
             const isExpanded = expandedCategories.has(cat)
             const catFiles = grouped[cat]
             return (
@@ -381,7 +383,7 @@ export function PreRawFiles() {
                           <div className="flex items-center gap-2">
                             <p className="text-sm text-text-primary truncate">{f.original_name}</p>
                             <StatusBadge variant={statusLabel[f.status]?.variant || 'default'}>
-                              {statusLabel[f.status]?.label || f.status}
+                              {t(statusLabel[f.status]?.label || f.status)}
                             </StatusBadge>
                           </div>
                           <p className="text-xs font-mono text-text-tertiary mt-0.5">
@@ -402,7 +404,7 @@ export function PreRawFiles() {
                                     ? 'text-accent-cyan'
                                     : 'text-text-tertiary hover:text-accent-cyan hover:bg-hover'
                                 }`}
-                                title="标记已审阅"
+                                title={t('标记已审阅')}
                               >
                                 <Eye size={14} strokeWidth={1.5} />
                               </button>
@@ -413,7 +415,7 @@ export function PreRawFiles() {
                                 }}
                                 disabled={ingestingId === f.id || f.status === 'approved'}
                                 className="h-8 w-8 flex items-center justify-center rounded text-accent-green hover:bg-accent-green/10 disabled:opacity-50 transition-colors"
-                                title="入库"
+                                title={t('入库')}
                               >
                                 {ingestingId === f.id ? (
                                   <Loader2 size={14} strokeWidth={1.5} className="animate-spin" />
@@ -432,7 +434,7 @@ export function PreRawFiles() {
                                     ? 'text-accent-red'
                                     : 'text-text-tertiary hover:text-accent-red hover:bg-accent-red/10'
                                 }`}
-                                title="拒绝"
+                                title={t('拒绝')}
                               >
                                 <XCircle size={14} strokeWidth={1.5} />
                               </button>
@@ -442,7 +444,7 @@ export function PreRawFiles() {
                                   setDeleteTarget(f)
                                 }}
                                 className="h-8 w-8 flex items-center justify-center rounded text-text-tertiary hover:text-accent-red hover:bg-accent-red/10 transition-colors"
-                                title="删除"
+                                title={t('删除')}
                               >
                                 <Trash2 size={14} strokeWidth={1.5} />
                               </button>
@@ -462,10 +464,10 @@ export function PreRawFiles() {
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="删除资料"
-        description={deleteTarget ? `确定删除「${deleteTarget.original_name}」？此操作不可恢复。` : ''}
+        title={t('删除资料')}
+        description={deleteTarget ? t('确定删除「{name}」？此操作不可恢复。', { name: deleteTarget.original_name }) : ''}
         variant="danger"
-        confirmLabel="删除"
+        confirmLabel={t('删除')}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />

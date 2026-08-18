@@ -1,3 +1,5 @@
+from app.ai.lang import lang_instruction
+
 # ----- 两阶段摄入：阶段一规划 + 阶段二单页生成 -----
 
 INGEST_PLAN_SYSTEM = """你是 MindForge 的 wiki 管理员。阅读原始资料，规划要创建的 wiki 页面清单。
@@ -47,6 +49,7 @@ def build_ingest_plan_messages(
     existing_tags: list,
     existing_pages: list,
     doc_metadata: dict | None = None,
+    lang: str = "zh",
 ) -> list:
     pages_text = "\n".join(
         f"- {p['slug']} | {p['title']} | {p['type']}" for p in existing_pages
@@ -57,7 +60,7 @@ def build_ingest_plan_messages(
         if pairs:
             meta_text = f"\n\n文档元数据（来自文件属性，可信；作者/日期/arXiv 号以此为准）：{pairs}"
     return [
-        {"role": "system", "content": INGEST_PLAN_SYSTEM},
+        {"role": "system", "content": INGEST_PLAN_SYSTEM + lang_instruction(lang)},
         {"role": "user", "content": (
             f"现有标签：{', '.join(existing_tags)}\n\n"
             f"已有页面（slug | 标题 | 类型）：\n{pages_text}\n\n"
@@ -74,6 +77,7 @@ def build_ingest_page_messages(
     allowed_tags: list,
     existing_page_content: str | None = None,
     sibling_pages: list | None = None,
+    lang: str = "zh",
 ) -> list:
     spec_text = (
         f"页面标题：{page_spec.get('title', '')}\n"
@@ -92,8 +96,12 @@ def build_ingest_page_messages(
     existing_text = ""
     if existing_page_content:
         existing_text = f"\n\n该页面现有内容（请合并新资料信息，不要丢失旧内容）：\n\n{existing_page_content[:15000]}"
+    system = INGEST_PAGE_SYSTEM
+    if lang == "en":
+        # 常量里的「使用中文」是硬指令，需先替换再追加语言指令
+        system = system.replace("7. **使用中文**。", "7. **使用英文**。") + lang_instruction(lang)
     return [
-        {"role": "system", "content": INGEST_PAGE_SYSTEM},
+        {"role": "system", "content": system},
         {"role": "user", "content": (
             f"本页可用的标签：{', '.join(allowed_tags)}\n\n"
             f"来源文件：{filename}\n\n"

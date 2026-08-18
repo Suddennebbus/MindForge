@@ -19,6 +19,7 @@ import { api } from '@/api/client'
 import type { WikiPage, Plan, RawFile } from '@/types'
 import { cn } from '@/lib/utils'
 import { useTaskStore } from '@/stores/taskStore'
+import { t as tGlobal, useT } from '@/i18n'
 
 type CommandItem = {
   id: string
@@ -60,6 +61,7 @@ function saveRecent(id: string) {
 }
 
 export function CommandPalette() {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState(0)
@@ -117,7 +119,7 @@ export function CommandPalette() {
             id: `raw-${f.id}`,
             type: 'raw' as const,
             title: f.original_name || f.filename,
-            subtitle: '已入库',
+            subtitle: tGlobal('已入库'),
             to: `/raw/${f.id}`,
             keywords: `${f.original_name} ${f.filename} ${f.category || ''}`,
           })),
@@ -125,7 +127,7 @@ export function CommandPalette() {
             id: `pre-raw-${f.id}`,
             type: 'pre-raw' as const,
             title: f.original_name || f.filename,
-            subtitle: '待入库',
+            subtitle: tGlobal('待入库'),
             to: `/pre-raw/${f.id}`,
             keywords: `${f.original_name} ${f.filename} ${f.category || ''}`,
           })),
@@ -145,6 +147,8 @@ export function CommandPalette() {
 
   const recentIds = useMemo(() => loadRecent(), [open])
 
+  const pages = useMemo(() => staticPages.map((p) => ({ ...p, title: t(p.title) })), [t])
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     const scored = q
@@ -152,7 +156,7 @@ export function CommandPalette() {
           const hay = `${item.title} ${item.subtitle || ''} ${item.keywords || ''}`.toLowerCase()
           return hay.includes(q)
         })
-      : [...staticPages, ...dynamic]
+      : [...pages, ...dynamic]
 
     if (!q) {
       const recentMap = new Map<string, CommandItem>()
@@ -161,19 +165,19 @@ export function CommandPalette() {
         if (item) recentMap.set(id, item)
       })
       const recent = Array.from(recentMap.values()).slice(0, 5)
-      const withoutRecent = staticPages.filter((p) => !recentIds.includes(p.id))
+      const withoutRecent = pages.filter((p) => !recentIds.includes(p.id))
       return recent.length > 0
         ? [
-            { id: 'recent-header', type: 'action' as const, title: '最近访问' },
+            { id: 'recent-header', type: 'action' as const, title: t('最近访问') },
             ...recent.map((r) => ({ ...r, icon: <Clock size={16} strokeWidth={1.5} /> })),
-            { id: 'pages-header', type: 'action' as const, title: '页面' },
+            { id: 'pages-header', type: 'action' as const, title: t('页面') },
             ...withoutRecent,
           ]
-        : staticPages
+        : pages
     }
 
     return scored.slice(0, 12)
-  }, [query, dynamic, recentIds])
+  }, [query, dynamic, recentIds, pages, t])
 
   useEffect(() => {
     setSelected((s) => Math.min(s, Math.max(filtered.length - 1, 0)))
@@ -229,14 +233,14 @@ export function CommandPalette() {
               setSelected(0)
             }}
             onKeyDown={onKeyDown}
-            placeholder="搜索页面、Wiki、计划、文件…"
+            placeholder={t('搜索页面、Wiki、计划、文件…')}
             className="flex-1 h-12 bg-transparent text-sm text-text-primary placeholder:text-text-muted outline-none"
           />
           {loading && <div className="w-4 h-4 border-2 border-text-tertiary border-t-transparent rounded-full animate-spin" />}
           <button
             onClick={() => setOpen(false)}
             className="p-1 rounded hover:bg-hover text-text-tertiary"
-            aria-label="关闭"
+            aria-label={t('关闭')}
           >
             <X size={16} strokeWidth={1.5} />
           </button>
@@ -244,7 +248,7 @@ export function CommandPalette() {
 
         <div ref={listRef} className="max-h-[50vh] overflow-auto py-2">
           {filtered.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-text-tertiary">未找到结果</div>
+            <div className="px-4 py-8 text-center text-sm text-text-tertiary">{t('未找到结果')}</div>
           ) : (
             filtered.map((item, idx) => {
               if (item.type === 'action') {
@@ -286,9 +290,9 @@ export function CommandPalette() {
         </div>
 
         <div className="px-4 py-2 border-t border-subtle bg-raised/30 flex items-center gap-4 text-[11px] text-text-muted">
-          <span className="flex items-center gap-1"><kbd className="px-1 rounded bg-surface border border-subtle">↑↓</kbd> 选择</span>
-          <span className="flex items-center gap-1"><kbd className="px-1 rounded bg-surface border border-subtle">↵</kbd> 打开</span>
-          <span className="flex items-center gap-1"><kbd className="px-1 rounded bg-surface border border-subtle">Esc</kbd> 关闭</span>
+          <span className="flex items-center gap-1"><kbd className="px-1 rounded bg-surface border border-subtle">↑↓</kbd> {t('选择')}</span>
+          <span className="flex items-center gap-1"><kbd className="px-1 rounded bg-surface border border-subtle">↵</kbd> {t('打开')}</span>
+          <span className="flex items-center gap-1"><kbd className="px-1 rounded bg-surface border border-subtle">Esc</kbd> {t('关闭')}</span>
         </div>
       </div>
     </div>

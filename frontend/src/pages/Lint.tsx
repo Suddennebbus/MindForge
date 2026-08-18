@@ -8,8 +8,10 @@ import {
   Stethoscope, CheckCircle, Clock, Trash2, Loader2,
 } from 'lucide-react'
 import type { LintReport } from '@/types'
+import { useT } from '@/i18n'
 
 export function Lint() {
+  const t = useT()
   const lintTask = useTaskStore((s) => s.tasks['lint'])
   const isLoading = lintTask?.status === 'running'
   const [reports, setReports] = useState<LintReport[]>([])
@@ -43,18 +45,18 @@ export function Lint() {
     } else {
       const err = useTaskStore.getState().tasks['lint']?.error
       if (err) {
-        toast({ title: '体检失败', description: err, variant: 'error' })
+        toast({ title: t('体检失败'), description: t(err), variant: 'error' })
       }
     }
   }
 
   const handleDeleteHistory = async (id: string) => {
-    if (!confirm('确定删除这条体检记录？')) return
+    if (!confirm(t('确定删除这条体检记录？'))) return
     try {
       await api.delete(`/ai/lint-reports/${id}`)
       setReports((prev) => prev.filter((r) => r.id !== id))
     } catch (err: any) {
-      alert('删除失败：' + (err.response?.data?.detail || err.message))
+      alert(t('删除失败：{msg}', { msg: err.response?.data?.detail || err.message }))
     }
   }
 
@@ -76,7 +78,7 @@ export function Lint() {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-text-primary truncate">
-              体检报告
+              {t('体检报告')}
             </p>
             <div className="flex items-center gap-3 mt-1.5 text-xs text-text-muted">
               <span className="flex items-center gap-1">
@@ -92,8 +94,8 @@ export function Lint() {
           <button
             onClick={(ev) => { ev.preventDefault(); handleDeleteHistory(report.id) }}
             className="text-text-muted hover:text-accent-red transition-colors shrink-0"
-            title="删除"
-            aria-label="删除"
+            title={t('删除')}
+            aria-label={t('删除')}
           >
             <Trash2 size={14} />
           </button>
@@ -105,7 +107,7 @@ export function Lint() {
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-title">体检中心</h2>
+        <h2 className="text-title">{t('体检中心')}</h2>
         <button
           onClick={handleLint}
           disabled={isLoading || !canEdit}
@@ -116,7 +118,7 @@ export function Lint() {
           ) : (
             <Stethoscope size={14} strokeWidth={1.5} className="mr-1.5" />
           )}
-          {isLoading ? '检查中...' : '开始体检'}
+          {isLoading ? t('检查中...') : t('开始体检')}
         </button>
       </div>
 
@@ -124,23 +126,23 @@ export function Lint() {
         <div className="flex items-center gap-3">
           <CheckCircle size={20} className="text-accent-green" strokeWidth={1.5} />
           <div>
-            <p className="text-body text-text-primary">Wiki 体检中心</p>
+            <p className="text-body text-text-primary">{t('Wiki 体检中心')}</p>
             <p className="text-small text-text-tertiary mt-0.5">
-              点击右上角「开始体检」检查 Wiki 健康状态，包括矛盾、过时内容、孤立页面、反向链接缺口、索引与标签一致性等。
+              {t('点击右上角「开始体检」检查 Wiki 健康状态，包括矛盾、过时内容、孤立页面、反向链接缺口、索引与标签一致性等。')}
             </p>
           </div>
         </div>
       </div>
 
       <div className="mt-8">
-        <h3 className="text-subtitle mb-4">体检记录</h3>
+        <h3 className="text-subtitle mb-4">{t('体检记录')}</h3>
         {historyLoading ? (
           <div className="py-8 text-center">
             <div className="h-8 w-32 animate-pulse bg-surface rounded-sm mx-auto" />
           </div>
         ) : reports.length === 0 ? (
           <div className="card text-center py-10 text-text-tertiary">
-            <p className="text-sm">暂无体检记录</p>
+            <p className="text-sm">{t('暂无体检记录')}</p>
           </div>
         ) : (
           <div className="space-y-3">

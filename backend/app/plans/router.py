@@ -3,7 +3,8 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Request
+from app.ai.lang import get_ui_lang
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import get_db
@@ -109,6 +110,7 @@ def get(plan_id: str, db: Session = Depends(get_db), user: User = Depends(get_cu
 @router.post("/{plan_id}/continue-generation")
 async def continue_generation(
     plan_id: str,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin", "editor")),
 ):
@@ -120,7 +122,7 @@ async def continue_generation(
 
     from app.agents.orchestrator import create_run_for_plan
     try:
-        run = await create_run_for_plan(db, user, plan)
+        run = await create_run_for_plan(db, user, plan, lang=get_ui_lang(request))
         audit_service.log_action(
             db, user.id, "execute", "plan", resource_id=plan.id,
             new_value={"continue_generation": True, "run_id": run.id, "title": plan.title},

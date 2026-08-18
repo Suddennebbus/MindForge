@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '@/api/client'
 import type { Exploration } from '@/types'
 import { ArrowLeft, Trash2, Compass, Clock } from 'lucide-react'
+import { useT } from '@/i18n'
 
 export function ExploreHistory() {
+  const t = useT()
   const navigate = useNavigate()
   const [explorations, setExplorations] = useState<Exploration[]>([])
   const [loading, setLoading] = useState(true)
@@ -17,7 +19,7 @@ export function ExploreHistory() {
   }, [])
 
   const handleDelete = async (id: string) => {
-    if (!confirm('确定删除这条探索记录？')) return
+    if (!confirm(t('确定删除这条探索记录？'))) return
     await api.delete(`/ai/explorations/${id}`)
     setExplorations((prev) => prev.filter((e) => e.id !== id))
   }
@@ -38,17 +40,17 @@ export function ExploreHistory() {
     <div>
       <button onClick={() => navigate('/explore')} className="btn-ghost mb-4">
         <ArrowLeft size={14} className="mr-1.5" />
-        返回探索
+        {t('返回探索')}
       </button>
 
-      <h2 className="text-title mb-5">探索历史</h2>
+      <h2 className="text-title mb-5">{t('探索历史')}</h2>
 
       {explorations.length === 0 && (
         <div className="card text-center py-12 text-text-tertiary">
           <Compass size={32} strokeWidth={1.5} className="mx-auto mb-3 opacity-40" />
-          <p>暂无探索记录</p>
+          <p>{t('暂无探索记录')}</p>
           <button onClick={() => navigate('/explore')} className="btn-secondary mt-4">
-            开始探索
+            {t('开始探索')}
           </button>
         </div>
       )}
@@ -74,16 +76,16 @@ export function ExploreHistory() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-text-primary truncate">
-                    {e.direction || '全局探索'}
+                    {e.direction || t('全局探索')}
                   </p>
                   <div className="flex items-center gap-3 mt-1.5 text-xs text-text-muted">
                     <span className="flex items-center gap-1">
                       <Clock size={11} />
                       {e.created_at.slice(0, 10)}
                     </span>
-                    {areaCount > 0 && <span>{areaCount} 个知识领域</span>}
-                    {gapCount > 0 && <span>{gapCount} 个缺口</span>}
-                    {recCount > 0 && <span>{recCount} 条建议</span>}
+                    {areaCount > 0 && <span>{t('{n} 个知识领域', { n: areaCount })}</span>}
+                    {gapCount > 0 && <span>{t('{n} 个缺口', { n: gapCount })}</span>}
+                    {recCount > 0 && <span>{t('{n} 条建议', { n: recCount })}</span>}
                   </div>
                 </div>
                 <button

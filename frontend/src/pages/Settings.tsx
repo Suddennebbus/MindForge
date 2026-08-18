@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import type { User, RolePermissions } from '@/types'
+import { useT } from '@/i18n'
 
 interface LLMConfig {
   id: string
@@ -78,6 +79,7 @@ const RESOURCE_LABELS: Record<string, string> = {
 }
 
 export function Settings() {
+  const t = useT()
   const [configs, setConfigs] = useState<LLMConfig[]>([])
   const [form, setForm] = useState({ ...emptyLlmForm })
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -128,8 +130,8 @@ export function Settings() {
       setTimeout(() => setSaved(false), 2000)
     } catch (err: unknown) {
       const msg = err && typeof err === 'object' && 'response' in err
-        ? String((err as { response?: { data?: { detail?: string } } }).response?.data?.detail || '操作失败')
-        : '操作失败'
+        ? String((err as { response?: { data?: { detail?: string } } }).response?.data?.detail || t('操作失败'))
+        : t('操作失败')
       setError(msg)
     }
   }
@@ -152,33 +154,33 @@ export function Settings() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('确定删除此配置？')) return
+    if (!confirm(t('确定删除此配置？'))) return
     await api.delete(`/llm-configs/${id}`)
     loadConfigs()
   }
 
   return (
     <div className="space-y-6">
-      <h2 className="text-title mb-5">设置</h2>
+      <h2 className="text-title mb-5">{t('设置')}</h2>
 
       <div className="card">
         <div className="flex items-center gap-2 mb-5">
           <Cpu size={15} className="text-accent-cyan" strokeWidth={1.5} />
-          <h3 className="text-subtitle">LLM 配置</h3>
+          <h3 className="text-subtitle">{t('LLM 配置')}</h3>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <input
               type="text"
-              placeholder="提供商（如 openai / deepseek / anthropic）"
+              placeholder={t('提供商（如 openai / deepseek / anthropic）')}
               value={form.provider}
               onChange={(e) => setForm({ ...form, provider: e.target.value })}
               className="input"
             />
             <input
               type="text"
-              placeholder="模型名（如 gpt-4o / deepseek-chat）"
+              placeholder={t('模型名（如 gpt-4o / deepseek-chat）')}
               value={form.model}
               onChange={(e) => setForm({ ...form, model: e.target.value })}
               className="input"
@@ -186,14 +188,14 @@ export function Settings() {
           </div>
           <input
             type="password"
-            placeholder={editingId ? 'API Key（留空保持原值）' : 'API Key'}
+            placeholder={editingId ? t('API Key（留空保持原值）') : t('API Key')}
             value={form.api_key}
             onChange={(e) => setForm({ ...form, api_key: e.target.value })}
             className="input w-full"
           />
           <input
             type="text"
-            placeholder="Base URL（可选）"
+            placeholder={t('Base URL（可选）')}
             value={form.base_url}
             onChange={(e) => setForm({ ...form, base_url: e.target.value })}
             className="input w-full"
@@ -205,31 +207,31 @@ export function Settings() {
               onChange={(e) => setForm({ ...form, is_default: e.target.checked })}
               className="accent-accent-cyan"
             />
-            <span className="text-small text-text-secondary">设为默认模型</span>
+            <span className="text-small text-text-secondary">{t('设为默认模型')}</span>
           </label>
           <div className="flex items-center gap-2">
             <button type="submit" className="btn-primary">
               {editingId ? (
                 <>
                   <CheckCircle size={14} strokeWidth={1.5} className="mr-1.5" />
-                  保存修改
+                  {t('保存修改')}
                 </>
               ) : (
                 <>
                   <Plus size={14} strokeWidth={1.5} className="mr-1.5" />
-                  添加配置
+                  {t('添加配置')}
                 </>
               )}
             </button>
             {editingId && (
               <button type="button" onClick={resetForm} className="btn-secondary">
-                取消
+                {t('取消')}
               </button>
             )}
             {saved && (
               <span className="text-xs text-accent-green flex items-center gap-1">
                 <CheckCircle size={12} />
-                已保存
+                {t('已保存')}
               </span>
             )}
           </div>
@@ -243,7 +245,7 @@ export function Settings() {
             {!configs.some((c) => c.is_default) && (
               <div className="flex items-center gap-2 px-3 py-2 rounded border border-accent-amber/30 bg-accent-amber/10 text-accent-amber text-xs">
                 <AlertTriangle size={13} strokeWidth={1.5} className="shrink-0" />
-                尚未设置默认模型，AI 功能（摄入、探索、问答、计划）将无法使用，请在下方选择一个模型设为默认。
+                {t('尚未设置默认模型，AI 功能（摄入、探索、问答、计划）将无法使用，请在下方选择一个模型设为默认。')}
               </div>
             )}
             {configs.map((c) => (
@@ -261,27 +263,27 @@ export function Settings() {
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0 ml-2">
                   {c.is_default ? (
-                    <span className="badge text-accent-green">默认</span>
+                    <span className="badge text-accent-green">{t('默认')}</span>
                   ) : (
                     <button
                       onClick={() => handleSetDefault(c.id)}
                       className="btn-secondary h-7 px-2.5 text-xs flex items-center gap-1"
                     >
                       <Star size={12} strokeWidth={1.5} />
-                      设为默认
+                      {t('设为默认')}
                     </button>
                   )}
                   <button
                     onClick={() => handleEdit(c)}
                     className="btn-ghost !h-7 !w-7 !px-0 justify-center"
-                    title="编辑"
+                    title={t('编辑')}
                   >
                     <Pencil size={13} strokeWidth={1.5} />
                   </button>
                   <button
                     onClick={() => handleDelete(c.id)}
                     className="btn-ghost !h-7 !w-7 !px-0 justify-center hover:text-accent-red"
-                    title="删除"
+                    title={t('删除')}
                   >
                     <Trash2 size={13} strokeWidth={1.5} />
                   </button>
@@ -298,6 +300,7 @@ export function Settings() {
 }
 
 function AdminSection() {
+  const t = useT()
   const currentUser = useAuthStore((s) => s.user)
   if (currentUser?.role !== 'admin') return null
 
@@ -305,7 +308,7 @@ function AdminSection() {
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <Shield size={18} className="text-accent-cyan" strokeWidth={1.5} />
-        <h3 className="text-subtitle">管理员功能</h3>
+        <h3 className="text-subtitle">{t('管理员功能')}</h3>
       </div>
       <UserManagement />
       <RolePermissionManagement />
@@ -314,6 +317,7 @@ function AdminSection() {
 }
 
 function UserManagement() {
+  const t = useT()
   const currentUser = useAuthStore((s) => s.user)
   const [users, setUsers] = useState<User[]>([])
   const [form, setForm] = useState({
@@ -364,8 +368,8 @@ function UserManagement() {
       setTimeout(() => setSaved(false), 2000)
     } catch (err: unknown) {
       const msg = err && typeof err === 'object' && 'response' in err
-        ? String((err as { response?: { data?: { detail?: string } } }).response?.data?.detail || '操作失败')
-        : '操作失败'
+        ? String((err as { response?: { data?: { detail?: string } } }).response?.data?.detail || t('操作失败'))
+        : t('操作失败')
       setError(msg)
     }
   }
@@ -383,14 +387,14 @@ function UserManagement() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('确定删除该用户？此操作不可撤销。')) return
+    if (!confirm(t('确定删除该用户？此操作不可撤销。'))) return
     try {
       await api.delete(`/auth/users/${id}`)
       loadUsers()
     } catch (err: unknown) {
       const msg = err && typeof err === 'object' && 'response' in err
-        ? String((err as { response?: { data?: { detail?: string } } }).response?.data?.detail || '删除失败')
-        : '删除失败'
+        ? String((err as { response?: { data?: { detail?: string } } }).response?.data?.detail || t('删除失败'))
+        : t('删除失败')
       alert(msg)
     }
   }
@@ -399,14 +403,14 @@ function UserManagement() {
     <div className="card">
       <div className="flex items-center gap-2 mb-5">
         <Users size={15} className="text-accent-cyan" strokeWidth={1.5} />
-        <h3 className="text-subtitle">用户管理</h3>
+        <h3 className="text-subtitle">{t('用户管理')}</h3>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3 mb-6">
         <div className="grid grid-cols-2 gap-3">
           <input
             type="text"
-            placeholder="用户名"
+            placeholder={t('用户名')}
             value={form.username}
             onChange={(e) => setForm({ ...form, username: e.target.value })}
             className="input"
@@ -420,21 +424,21 @@ function UserManagement() {
           >
             {ROLE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
-                {opt.label}
+                {t(opt.label)}
               </option>
             ))}
           </select>
         </div>
         <input
           type="email"
-          placeholder="邮箱（可选，留空则自动生成）"
+          placeholder={t('邮箱（可选，留空则自动生成）')}
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           className="input w-full"
         />
         <input
           type="password"
-          placeholder={editingId ? '密码（留空保持原值）' : '密码'}
+          placeholder={editingId ? t('密码（留空保持原值）') : t('密码')}
           value={form.password}
           onChange={(e) => setForm({ ...form, password: e.target.value })}
           className="input w-full"
@@ -445,25 +449,25 @@ function UserManagement() {
             {editingId ? (
               <>
                 <CheckCircle size={14} strokeWidth={1.5} className="mr-1.5" />
-                保存修改
+                {t('保存修改')}
               </>
             ) : (
               <>
                 <Plus size={14} strokeWidth={1.5} className="mr-1.5" />
-                添加用户
+                {t('添加用户')}
               </>
             )}
           </button>
           {editingId && (
             <button type="button" onClick={resetForm} className="btn-secondary">
               <X size={14} strokeWidth={1.5} className="mr-1.5" />
-              取消
+              {t('取消')}
             </button>
           )}
           {saved && (
             <span className="text-xs text-accent-green flex items-center gap-1">
               <CheckCircle size={12} />
-              已保存
+              {t('已保存')}
             </span>
           )}
         </div>
@@ -471,7 +475,7 @@ function UserManagement() {
       </form>
 
       <div className="border-t border-subtle pt-4">
-        <div className="text-xs text-text-tertiary uppercase tracking-wider mb-2">用户列表</div>
+        <div className="text-xs text-text-tertiary uppercase tracking-wider mb-2">{t('用户列表')}</div>
         <div className="space-y-2">
           {users.map((u) => (
             <div
@@ -482,25 +486,25 @@ function UserManagement() {
                 <div className="text-sm text-text-primary truncate">
                   {u.username}
                   {u.id === currentUser?.id && (
-                    <span className="ml-2 text-xs text-accent-cyan">（当前账号）</span>
+                    <span className="ml-2 text-xs text-accent-cyan">{t('（当前账号）')}</span>
                   )}
                 </div>
                 <div className="text-xs text-text-tertiary truncate">
-                  {u.email} · {ROLE_LABELS[u.role] || u.role}
+                  {u.email} · {t(ROLE_LABELS[u.role] || u.role)}
                 </div>
               </div>
               <div className="flex items-center gap-1.5 shrink-0 ml-2">
                 <button
                   onClick={() => handleEdit(u)}
                   className="btn-ghost !h-7 !w-7 !px-0 justify-center"
-                  title="编辑"
+                  title={t('编辑')}
                 >
                   <Pencil size={13} strokeWidth={1.5} />
                 </button>
                 <button
                   onClick={() => handleDelete(u.id)}
                   className="btn-ghost !h-7 !w-7 !px-0 justify-center hover:text-accent-red"
-                  title="删除"
+                  title={t('删除')}
                   disabled={u.id === currentUser?.id}
                 >
                   <Trash2 size={13} strokeWidth={1.5} />
@@ -509,7 +513,7 @@ function UserManagement() {
             </div>
           ))}
           {users.length === 0 && (
-            <div className="text-sm text-text-tertiary py-2">暂无用户</div>
+            <div className="text-sm text-text-tertiary py-2">{t('暂无用户')}</div>
           )}
         </div>
       </div>
@@ -518,6 +522,7 @@ function UserManagement() {
 }
 
 function RolePermissionManagement() {
+  const t = useT()
   const [roles, setRoles] = useState<RolePermissions[]>([])
   const [savedRole, setSavedRole] = useState<string | null>(null)
 
@@ -558,8 +563,8 @@ function RolePermissionManagement() {
       loadRoles()
     } catch (err: unknown) {
       const msg = err && typeof err === 'object' && 'response' in err
-        ? String((err as { response?: { data?: { detail?: string } } }).response?.data?.detail || '保存失败')
-        : '保存失败'
+        ? String((err as { response?: { data?: { detail?: string } } }).response?.data?.detail || t('保存失败'))
+        : t('保存失败')
       alert(msg)
     }
   }
@@ -568,7 +573,7 @@ function RolePermissionManagement() {
     <div className="card">
       <div className="flex items-center gap-2 mb-5">
         <Shield size={15} className="text-accent-cyan" strokeWidth={1.5} />
-        <h3 className="text-subtitle">角色权限管理</h3>
+        <h3 className="text-subtitle">{t('角色权限管理')}</h3>
       </div>
 
       <div className="space-y-6">
@@ -578,20 +583,20 @@ function RolePermissionManagement() {
           <div key={role.role_name} className="border border-subtle rounded-sm overflow-hidden">
             <div className="flex items-center justify-between px-3 py-2 bg-raised/30 border-b border-subtle">
               <span className="text-sm font-medium text-text-primary">
-                {ROLE_LABELS[role.role_name] || role.role_name}
+                {ROLE_LABELS[role.role_name] ? t(ROLE_LABELS[role.role_name]) : role.role_name}
               </span>
               <div className="flex items-center gap-2">
                 {savedRole === role.role_name && (
                   <span className="text-xs text-accent-green flex items-center gap-1">
                     <CheckCircle size={12} />
-                    已保存
+                    {t('已保存')}
                   </span>
                 )}
                 <button
                   onClick={() => saveRole(role.role_name)}
                   className="btn-primary text-xs !px-3 !py-1"
                 >
-                  保存权限
+                  {t('保存权限')}
                 </button>
               </div>
             </div>
@@ -599,13 +604,13 @@ function RolePermissionManagement() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-subtle bg-inset/50">
-                    <th className="text-left px-3 py-2 text-text-tertiary font-medium">资源</th>
+                    <th className="text-left px-3 py-2 text-text-tertiary font-medium">{t('资源')}</th>
                     {ALL_ACTIONS.map((action) => (
                       <th
                         key={action}
                         className="text-center px-2 py-2 text-text-tertiary font-medium min-w-[64px]"
                       >
-                        {ACTION_LABELS[action]}
+                        {t(ACTION_LABELS[action])}
                       </th>
                     ))}
                   </tr>
@@ -613,7 +618,7 @@ function RolePermissionManagement() {
                 <tbody>
                   {ALL_RESOURCES.map((resource) => (
                     <tr key={resource} className="border-b border-subtle last:border-b-0">
-                      <td className="px-3 py-2 text-text-secondary">{RESOURCE_LABELS[resource]}</td>
+                      <td className="px-3 py-2 text-text-secondary">{t(RESOURCE_LABELS[resource])}</td>
                       {ALL_ACTIONS.map((action) => (
                         <td key={action} className="text-center px-2 py-2">
                           <input
@@ -634,16 +639,16 @@ function RolePermissionManagement() {
       </div>
 
       <div className="mt-4 p-3 bg-inset rounded-sm text-xs text-text-tertiary space-y-1">
-        <p>默认权限说明：</p>
+        <p>{t('默认权限说明：')}</p>
         <ul className="list-disc list-inside space-y-0.5">
           <li>
-            <span className="text-text-secondary">管理员</span>：可执行所有操作，包括用户与权限管理。
+            <span className="text-text-secondary">{t('管理员')}</span>{t('：可执行所有操作，包括用户与权限管理。')}
           </li>
           <li>
-            <span className="text-text-secondary">研究员</span>：可创建、更新、删除知识与资料，执行探索、摄入、体检等操作。
+            <span className="text-text-secondary">{t('研究员')}</span>{t('：可创建、更新、删除知识与资料，执行探索、摄入、体检等操作。')}
           </li>
           <li>
-            <span className="text-text-secondary">游客</span>：仅可查看内容并使用对话模块。
+            <span className="text-text-secondary">{t('游客')}</span>{t('：仅可查看内容并使用对话模块。')}
           </li>
         </ul>
       </div>

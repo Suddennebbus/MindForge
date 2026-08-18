@@ -24,6 +24,7 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { toast } from '@/stores/toastStore'
 import { useTaskStore } from '@/stores/taskStore'
+import { useT } from '@/i18n'
 import {
   useInterviewStore,
   type InterviewQuestion,
@@ -41,6 +42,7 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'active
 }
 
 export function Plans() {
+  const t = useT()
   const navigate = useNavigate()
   const location = useLocation()
   const [plans, setPlans] = useState<Plan[]>([])
@@ -100,7 +102,7 @@ export function Plans() {
     setLoading(true)
     api.get('/plans')
       .then((resp) => setPlans(resp.data))
-      .catch(() => toast({ title: '加载计划失败', variant: 'error' }))
+      .catch(() => toast({ title: t('加载计划失败'), variant: 'error' }))
       .finally(() => setLoading(false))
   }
 
@@ -109,10 +111,10 @@ export function Plans() {
     try {
       await api.delete(`/plans/${deleteTarget.id}`)
       setPlans((prev) => prev.filter((p) => p.id !== deleteTarget.id))
-      toast({ title: '计划已删除', variant: 'success' })
+      toast({ title: t('计划已删除'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '删除失败',
+        title: t('删除失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -129,10 +131,10 @@ export function Plans() {
       setShowModal(false)
       setModalMode('choose')
       loadPlans()
-      toast({ title: '计划已创建', variant: 'success' })
+      toast({ title: t('计划已创建'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '创建失败',
+        title: t('创建失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -157,7 +159,7 @@ export function Plans() {
       setModalMode('ai-step2')
     } catch (err: any) {
       toast({
-        title: '访谈启动失败',
+        title: t('访谈启动失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -179,7 +181,7 @@ export function Plans() {
       setModalMode('ai-running')
     } catch (err: any) {
       toast({
-        title: '生成计划失败',
+        title: t('生成计划失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -195,7 +197,7 @@ export function Plans() {
       setShowContinueModal(true)
     } catch (err: any) {
       toast({
-        title: '继续生成失败',
+        title: t('继续生成失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -256,10 +258,10 @@ export function Plans() {
       resetModal()
       loadPlans()
       navigate(`/plans/${resp.data.id}`)
-      toast({ title: '计划上传成功', variant: 'success' })
+      toast({ title: t('计划上传成功'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '上传失败',
+        title: t('上传失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -351,7 +353,7 @@ export function Plans() {
                 onChange={() => useInterviewStore.getState().setAnswer(q.id, { ...ans, choice: '__other__' })}
                 className="accent-accent-cyan"
               />
-              <span className="text-sm text-text-primary">其他</span>
+              <span className="text-sm text-text-primary">{t('其他')}</span>
             </label>
           )}
           {(ans.choice === '__other__' || (choices.length === 0 && q.allow_other !== false)) && (
@@ -360,7 +362,7 @@ export function Plans() {
               value={ans.text || ''}
               onChange={(e) => useInterviewStore.getState().setAnswer(q.id, { ...ans, text: e.target.value })}
               className="input w-full"
-              placeholder={q.placeholder || '请补充说明...'}
+              placeholder={q.placeholder || t('请补充说明...')}
             />
           )}
         </div>
@@ -373,7 +375,7 @@ export function Plans() {
         value={(answers[q.id] as string) || ''}
         onChange={(e) => useInterviewStore.getState().setAnswer(q.id, e.target.value)}
         className="input w-full"
-        placeholder={q.placeholder || '请输入你的回答...'}
+        placeholder={q.placeholder || t('请输入你的回答...')}
       />
     )
   }
@@ -381,7 +383,7 @@ export function Plans() {
   const columns = [
     {
       key: 'title',
-      header: '计划',
+      header: t('计划'),
       render: (plan: Plan) => (
         <div className="min-w-0">
           <div className="text-sm font-medium text-text-primary truncate">{plan.title}</div>
@@ -393,16 +395,16 @@ export function Plans() {
     },
     {
       key: 'status',
-      header: '状态',
+      header: t('状态'),
       width: '100px',
       render: (plan: Plan) => {
         const cfg = statusConfig[plan.status] || statusConfig.draft
-        return <StatusBadge variant={cfg.variant}>{cfg.label}</StatusBadge>
+        return <StatusBadge variant={cfg.variant}>{t(cfg.label)}</StatusBadge>
       },
     },
     {
       key: 'meta',
-      header: '元信息',
+      header: t('元信息'),
       width: '220px',
       render: (plan: Plan) => (
         <div className="flex items-center gap-3 text-xs text-text-tertiary">
@@ -436,7 +438,7 @@ export function Plans() {
               className="h-7 px-2 text-xs rounded border border-accent-cyan/20 bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/20 flex items-center gap-1 transition-colors"
             >
               <Sparkles size={12} strokeWidth={1.5} />
-              继续
+              {t('继续')}
             </button>
           )}
           {canEdit && (
@@ -446,7 +448,7 @@ export function Plans() {
                 setDeleteTarget(plan)
               }}
               className="p-1.5 rounded hover:bg-accent-red/10 text-text-tertiary hover:text-accent-red transition-colors"
-              aria-label="删除"
+              aria-label={t('删除')}
             >
               <Trash2 size={14} strokeWidth={1.5} />
             </button>
@@ -459,8 +461,8 @@ export function Plans() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="研究计划"
-        description="管理研究方向、生成研究计划并跟踪进度。"
+        title={t('研究计划')}
+        description={t('管理研究方向、生成研究计划并跟踪进度。')}
         icon={ClipboardList}
         actions={
           canEdit && (
@@ -472,7 +474,7 @@ export function Plans() {
               className="btn-primary h-8 px-3 text-xs flex items-center gap-1.5"
             >
               <Plus size={14} strokeWidth={1.5} />
-              新增
+              {t('新增')}
             </button>
           )
         }
@@ -482,17 +484,17 @@ export function Plans() {
         <div className="flex items-center gap-3 px-4 py-3 rounded border border-accent-cyan/30 bg-accent-cyan/10">
           <Sparkles size={16} className="text-accent-cyan shrink-0" strokeWidth={1.5} />
           <div className="min-w-0 flex-1">
-            <span className="block text-xs text-text-tertiary">采访进行中</span>
-            <span className="block text-sm font-medium text-text-primary truncate">{direction || '未命名方向'}</span>
+            <span className="block text-xs text-text-tertiary">{t('采访进行中')}</span>
+            <span className="block text-sm font-medium text-text-primary truncate">{direction || t('未命名方向')}</span>
           </div>
           <button onClick={resumeInterview} className="btn-secondary h-7 px-2.5 text-xs shrink-0">
-            继续采访
+            {t('继续采访')}
           </button>
           <button
             onClick={() => useInterviewStore.getState().dismiss()}
             className="btn-ghost h-7 px-2.5 text-xs shrink-0"
           >
-            放弃
+            {t('放弃')}
           </button>
         </div>
       )}
@@ -505,8 +507,8 @@ export function Plans() {
         </div>
       ) : plans.length === 0 ? (
         <EmptyState
-          title="暂无研究计划"
-          description="创建第一个计划开始组织研究方向。"
+          title={t('暂无研究计划')}
+          description={t('创建第一个计划开始组织研究方向。')}
           icon={ClipboardList}
           action={
             canEdit ? (
@@ -518,7 +520,7 @@ export function Plans() {
                 className="btn-primary h-8 px-3 text-xs flex items-center gap-1.5"
               >
                 <Plus size={14} strokeWidth={1.5} />
-                创建第一个计划
+                {t('创建第一个计划')}
               </button>
             ) : undefined
           }
@@ -534,10 +536,10 @@ export function Plans() {
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="删除研究计划"
-        description={deleteTarget ? `确定删除「${deleteTarget.title}」？` : ''}
+        title={t('删除研究计划')}
+        description={deleteTarget ? t('确定删除「{title}」？', { title: deleteTarget.title }) : ''}
         variant="danger"
-        confirmLabel="删除"
+        confirmLabel={t('删除')}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
@@ -548,12 +550,12 @@ export function Plans() {
           <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-lg border border-subtle bg-surface shadow-xl overflow-hidden">
             <div className="px-4 h-12 flex items-center justify-between border-b border-subtle bg-raised/30">
               <span className="text-sm font-medium text-text-primary">
-                {modalMode === 'choose' && '新建研究计划'}
-                {modalMode === 'manual' && '手动创建计划'}
-                {modalMode === 'upload' && '上传研究计划'}
-                {modalMode === 'ai-step1' && 'AI 辅助生成'}
-                {modalMode === 'ai-step2' && 'AI 访谈'}
-                {modalMode === 'ai-running' && 'AI 生成中'}
+                {modalMode === 'choose' && t('新建研究计划')}
+                {modalMode === 'manual' && t('手动创建计划')}
+                {modalMode === 'upload' && t('上传研究计划')}
+                {modalMode === 'ai-step1' && t('AI 辅助生成')}
+                {modalMode === 'ai-step2' && t('AI 访谈')}
+                {modalMode === 'ai-running' && t('AI 生成中')}
               </span>
               <button
                 onClick={closeModal}
@@ -570,24 +572,24 @@ export function Plans() {
                     {
                       mode: 'ai-step1',
                       icon: Sparkles,
-                      title: 'AI 辅助生成',
-                      desc: '描述研究方向，AI 采访并调研生成计划',
+                      title: t('AI 辅助生成'),
+                      desc: t('描述研究方向，AI 采访并调研生成计划'),
                       tone: 'text-accent-cyan',
                       bg: 'bg-accent-cyan/10',
                     },
                     {
                       mode: 'manual',
                       icon: Plus,
-                      title: '手动创建',
-                      desc: '直接填写标题、描述等信息',
+                      title: t('手动创建'),
+                      desc: t('直接填写标题、描述等信息'),
                       tone: 'text-text-secondary',
                       bg: 'bg-raised',
                     },
                     {
                       mode: 'upload',
                       icon: Upload,
-                      title: '上传',
-                      desc: '上传 markdown / pdf / doc / txt',
+                      title: t('上传'),
+                      desc: t('上传 markdown / pdf / doc / txt'),
                       tone: 'text-accent-green',
                       bg: 'bg-accent-green/10',
                     },
@@ -625,43 +627,43 @@ export function Plans() {
               {modalMode === 'manual' && (
                 <form onSubmit={handleCreate} className="space-y-3">
                   <div>
-                    <label className="block text-[11px] uppercase tracking-wider text-text-tertiary mb-1.5">标题</label>
+                    <label className="block text-[11px] uppercase tracking-wider text-text-tertiary mb-1.5">{t('标题')}</label>
                     <input
                       type="text"
                       value={form.title}
                       onChange={(e) => setForm({ ...form, title: e.target.value })}
                       className="input w-full"
-                      placeholder="输入计划标题"
+                      placeholder={t('输入计划标题')}
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] uppercase tracking-wider text-text-tertiary mb-1.5">研究方向</label>
+                    <label className="block text-[11px] uppercase tracking-wider text-text-tertiary mb-1.5">{t('研究方向')}</label>
                     <input
                       type="text"
                       value={form.direction}
                       onChange={(e) => setForm({ ...form, direction: e.target.value })}
                       className="input w-full"
-                      placeholder="如：大模型安全护栏"
+                      placeholder={t('如：大模型安全护栏')}
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] uppercase tracking-wider text-text-tertiary mb-1.5">描述</label>
+                    <label className="block text-[11px] uppercase tracking-wider text-text-tertiary mb-1.5">{t('描述')}</label>
                     <textarea
                       value={form.description}
                       onChange={(e) => setForm({ ...form, description: e.target.value })}
                       className="input w-full h-[40vh] resize-y py-2"
-                      placeholder="描述研究目标和方法，支持 Markdown 格式..."
+                      placeholder={t('描述研究目标和方法，支持 Markdown 格式...')}
                     />
                   </div>
                   <div className="flex justify-end gap-2 pt-2">
                     <button type="button" onClick={() => setModalMode('choose')} className="btn-ghost h-8 px-3 text-xs">
                       <ArrowLeft size={14} className="mr-1" />
-                      返回
+                      {t('返回')}
                     </button>
                     <button type="submit" className="btn-primary h-8 px-3 text-xs">
                       <Plus size={14} strokeWidth={1.5} className="mr-1.5" />
-                      创建
+                      {t('创建')}
                     </button>
                   </div>
                 </form>
@@ -673,7 +675,7 @@ export function Plans() {
                     <FileText size={20} className="text-accent-cyan shrink-0" strokeWidth={1.5} />
                     <div className="min-w-0">
                       <p className="text-sm text-text-primary truncate">{uploadFile?.name}</p>
-                      <p className="text-xs text-text-tertiary">支持 Markdown、PDF、Word、TXT</p>
+                      <p className="text-xs text-text-tertiary">{t('支持 Markdown、PDF、Word、TXT')}</p>
                     </div>
                   </div>
                   <div className="flex justify-end gap-2">
@@ -686,7 +688,7 @@ export function Plans() {
                       className="btn-ghost h-8 px-3 text-xs"
                     >
                       <ArrowLeft size={14} className="mr-1" />
-                      返回
+                      {t('返回')}
                     </button>
                     <button
                       onClick={handleUploadPlan}
@@ -696,12 +698,12 @@ export function Plans() {
                       {uploading ? (
                         <>
                           <Loader2 size={14} strokeWidth={1.5} className="mr-1.5 animate-spin" />
-                          上传中…
+                          {t('上传中…')}
                         </>
                       ) : (
                         <>
                           <Upload size={14} strokeWidth={1.5} className="mr-1.5" />
-                          确认上传
+                          {t('确认上传')}
                         </>
                       )}
                     </button>
@@ -712,13 +714,13 @@ export function Plans() {
               {modalMode === 'ai-step1' && (
                 <div className="space-y-4">
                   <p className="text-sm text-text-secondary">
-                    描述你想研究的方向，AI 会向你提出几个澄清问题，帮助你明确研究目标。
+                    {t('描述你想研究的方向，AI 会向你提出几个澄清问题，帮助你明确研究目标。')}
                   </p>
                   <textarea
                     value={direction}
                     onChange={(e) => useInterviewStore.getState().setDirection(e.target.value)}
                     className="input w-full h-32 resize-y py-2"
-                    placeholder="例如：我想研究大语言模型的安全护栏机制..."
+                    placeholder={t('例如：我想研究大语言模型的安全护栏机制...')}
                   />
                   <div className="flex justify-end gap-2">
                     <button
@@ -730,7 +732,7 @@ export function Plans() {
                       className="btn-ghost h-8 px-3 text-xs"
                     >
                       <ArrowLeft size={14} className="mr-1" />
-                      返回
+                      {t('返回')}
                     </button>
                     <button
                       onClick={handleStartInterview}
@@ -740,12 +742,12 @@ export function Plans() {
                       {interviewLoading ? (
                         <>
                           <Loader2 size={14} strokeWidth={1.5} className="mr-1.5 animate-spin" />
-                          准备问题中…
+                          {t('准备问题中…')}
                         </>
                       ) : (
                         <>
                           <Send size={14} strokeWidth={1.5} className="mr-1.5" />
-                          开始访谈
+                          {t('开始访谈')}
                         </>
                       )}
                     </button>
@@ -756,7 +758,7 @@ export function Plans() {
               {modalMode === 'ai-step2' && (
                 <div className="space-y-5">
                   <p className="text-sm text-text-secondary">
-                    研究方向：<span className="text-text-primary font-medium">{direction}</span>
+                    {t('研究方向：')}<span className="text-text-primary font-medium">{direction}</span>
                   </p>
                   {questions.map((q, i) => (
                     <div key={q.id}>
@@ -770,7 +772,7 @@ export function Plans() {
                   <div className="flex justify-end gap-2 pt-2">
                     <button type="button" onClick={() => setModalMode('ai-step1')} className="btn-ghost h-8 px-3 text-xs">
                       <ArrowLeft size={14} className="mr-1" />
-                      返回
+                      {t('返回')}
                     </button>
                     <button
                       onClick={handleGeneratePlan}
@@ -780,12 +782,12 @@ export function Plans() {
                       {generateLoading ? (
                         <>
                           <Loader2 size={14} strokeWidth={1.5} className="mr-1.5 animate-spin" />
-                          生成中…
+                          {t('生成中…')}
                         </>
                       ) : (
                         <>
                           <Sparkles size={14} strokeWidth={1.5} className="mr-1.5" />
-                          生成研究计划
+                          {t('生成研究计划')}
                         </>
                       )}
                     </button>
@@ -810,7 +812,7 @@ export function Plans() {
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleContinueCancel} />
           <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-lg border border-subtle bg-surface shadow-xl overflow-hidden">
             <div className="px-4 h-12 flex items-center justify-between border-b border-subtle bg-raised/30">
-              <span className="text-sm font-medium text-text-primary">AI 正在继续生成研究计划</span>
+              <span className="text-sm font-medium text-text-primary">{t('AI 正在继续生成研究计划')}</span>
               <button
                 onClick={handleContinueCancel}
                 className="p-1 rounded hover:bg-hover text-text-tertiary transition-colors"

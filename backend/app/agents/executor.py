@@ -108,6 +108,7 @@ def _build_context(run: AgentRun, db: Session, user_id: str) -> dict:
         "answers": payload.get("answers", {}),
         "exploration_result": payload.get("exploration_result"),
         "recommendation": payload.get("recommendation"),
+        "lang": payload.get("lang", "zh"),
         "wiki_content": wiki_content,
         "_db": db,
         "_user_id": user_id,

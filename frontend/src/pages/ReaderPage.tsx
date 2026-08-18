@@ -5,6 +5,7 @@ import { MarkdownRenderer } from '@/components/MarkdownRenderer'
 import { PdfViewer } from '@/components/PdfViewer'
 import type { PdfViewerRef } from '@/components/PdfViewer'
 import { useAuthStore } from '@/stores/authStore'
+import { useT } from '@/i18n'
 import type { Annotation, RawFile } from '@/types'
 import {
   ArrowLeft,
@@ -34,6 +35,7 @@ interface SelectionInfo {
 }
 
 export function ReaderPage() {
+  const t = useT()
   const { id } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -168,12 +170,12 @@ export function ReaderPage() {
       window.getSelection()?.removeAllRanges()
       loadData()
     } catch (err: any) {
-      alert('添加批注失败：' + (err.response?.data?.detail || err.message))
+      alert(t('添加批注失败：{msg}', { msg: err.response?.data?.detail || err.message }))
     }
   }
 
   const handleDeleteAnnotation = async (annotationId: string) => {
-    if (!confirm('确定删除这条批注？')) return
+    if (!confirm(t('确定删除这条批注？'))) return
     const endpoint = sourceType === 'human-output'
       ? `/raw/human-outputs/${id}/annotations/${annotationId}`
       : `/raw/${id}/annotations/${annotationId}`
@@ -181,7 +183,7 @@ export function ReaderPage() {
       await api.delete(endpoint)
       loadData()
     } catch (err: any) {
-      alert('删除批注失败：' + (err.response?.data?.detail || err.message))
+      alert(t('删除批注失败：{msg}', { msg: err.response?.data?.detail || err.message }))
     }
   }
 
@@ -262,13 +264,13 @@ export function ReaderPage() {
   if (!file) {
     return (
       <div className="fixed inset-0 z-50 bg-base flex flex-col items-center justify-center">
-        <p className="text-text-tertiary mb-4">文件不存在</p>
+        <p className="text-text-tertiary mb-4">{t('文件不存在')}</p>
         <button
           onClick={() => navigate(sourceType === 'human-output' ? '/human-outputs' : `/${sourceType}`)}
           className="btn-secondary"
         >
           <ArrowLeft size={14} className="mr-1.5" />
-          返回列表
+          {t('返回列表')}
         </button>
       </div>
     )
@@ -319,8 +321,8 @@ export function ReaderPage() {
           {fileContent?.type === 'pdf' && (!pdfBlobUrl || pdfError) && (
             <div className="flex flex-col items-center justify-center h-full text-text-tertiary">
               <AlertCircle size={32} strokeWidth={1.5} className="mb-3" />
-              <p>PDF 加载失败</p>
-              <p className="text-xs mt-1">请尝试下载后查看</p>
+              <p>{t('PDF 加载失败')}</p>
+              <p className="text-xs mt-1">{t('请尝试下载后查看')}</p>
             </div>
           )}
 
@@ -329,8 +331,8 @@ export function ReaderPage() {
             {fileContent?.type === 'unsupported' && (
               <div className="flex flex-col items-center justify-center py-20 text-text-tertiary">
                 <AlertCircle size={32} strokeWidth={1.5} className="mb-3" />
-                <p>该文件格式暂不支持在线阅读</p>
-                <p className="text-xs mt-1">请下载后在本地查看</p>
+                <p>{t('该文件格式暂不支持在线阅读')}</p>
+                <p className="text-xs mt-1">{t('请下载后在本地查看')}</p>
               </div>
             )}
 
@@ -403,12 +405,12 @@ export function ReaderPage() {
               })()}
             >
               <p className="text-xs text-text-muted mb-2 truncate max-w-[220px]">
-                选中: {selection.text.slice(0, 40)}{selection.text.length > 40 ? '...' : ''}
+                {t('选中: {text}', { text: selection.text.slice(0, 40) + (selection.text.length > 40 ? '...' : '') })}
               </p>
               <textarea
                 value={annotationText}
                 onChange={(e) => setAnnotationText(e.target.value)}
-                placeholder="输入批注..."
+                placeholder={t('输入批注...')}
                 className="input w-full h-20 resize-none text-sm mb-2"
                 autoFocus
                 onKeyDown={(e) => {
@@ -425,7 +427,7 @@ export function ReaderPage() {
                   }}
                   className="btn-ghost text-xs !h-7 !px-2"
                 >
-                  取消
+                  {t('取消')}
                 </button>
                 <button
                   onClick={handleCreateAnnotation}
@@ -433,7 +435,7 @@ export function ReaderPage() {
                   className="btn-primary text-xs !h-7 !px-2 disabled:opacity-50"
                 >
                   <Send size={12} className="mr-1" />
-                  添加批注
+                  {t('添加批注')}
                 </button>
               </div>
             </div>
@@ -449,7 +451,7 @@ export function ReaderPage() {
           {panelCollapsed ? (
             <button
               onClick={togglePanel}
-              title="展开批注面板"
+              title={t('展开批注面板')}
               className="flex flex-col items-center gap-2 py-3 text-text-muted hover:text-text-primary transition-colors"
             >
               <PanelRightOpen size={15} strokeWidth={1.5} />
@@ -459,10 +461,10 @@ export function ReaderPage() {
             <>
           <div className="px-4 py-3 border-b border-default flex items-center gap-2">
             <MessageSquarePlus size={14} strokeWidth={1.5} className="text-accent-cyan" />
-            <h3 className="text-sm font-medium flex-1">批注 ({annotations.length})</h3>
+            <h3 className="text-sm font-medium flex-1">{t('批注 ({count})', { count: annotations.length })}</h3>
             <button
               onClick={togglePanel}
-              title="收起批注面板"
+              title={t('收起批注面板')}
               className="p-1 rounded-sm text-text-muted hover:text-text-primary hover:bg-surface-active transition-colors"
             >
               <PanelRightClose size={14} strokeWidth={1.5} />
@@ -471,7 +473,7 @@ export function ReaderPage() {
           <div className="flex-1 overflow-auto p-3 space-y-2">
             {annotations.length === 0 && (
               <p className="text-xs text-text-muted text-center py-8">
-                暂无批注，选中文本后添加
+                {t('暂无批注，选中文本后添加')}
               </p>
             )}
             {annotations.map((ann) => {
@@ -505,7 +507,7 @@ export function ReaderPage() {
                           handleDeleteAnnotation(ann.id)
                         }}
                         className="p-1 rounded-sm text-text-muted hover:text-accent-red hover:bg-accent-red/10 transition-colors"
-                        title="删除批注"
+                        title={t('删除批注')}
                       >
                         <Trash2 size={12} />
                       </button>

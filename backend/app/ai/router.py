@@ -4,7 +4,7 @@ import re
 import time
 from datetime import datetime
 from app.utils_time import beijing_now
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -18,6 +18,7 @@ from app.ai import ingest_service, audit_logger
 from app.raw import models as raw_models, storage as raw_storage
 from app.wiki import models as wiki_models, storage as wiki_storage
 from app.ai import lint_service
+from app.ai.lang import get_ui_lang
 from app.audit import service as audit_service
 from app import activity
 
@@ -217,6 +218,7 @@ from app.ai import ingest_service
 @ai_router.post("/ingest/plan")
 async def ingest_plan(
     data: dict,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin", "editor"))
 ):
@@ -230,7 +232,7 @@ async def ingest_plan(
 
     config = _get_default_config(db, user)
     try:
-        session = await ingest_service.plan_ingest(db, raw, user, config)
+        session = await ingest_service.plan_ingest(db, raw, user, config, lang=get_ui_lang(request))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
@@ -242,6 +244,7 @@ async def ingest_plan(
 @ai_router.post("/ingest/plan-batch")
 async def ingest_plan_batch(
     data: dict,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin", "editor"))
 ):
@@ -280,7 +283,7 @@ async def ingest_plan_batch(
     errors = []
     for raw in raws:
         try:
-            session = await ingest_service.plan_ingest(db, raw, user, config)
+            session = await ingest_service.plan_ingest(db, raw, user, config, lang=get_ui_lang(request))
         except Exception as exc:
             errors.append({"raw_file_id": raw.id, "filename": raw.original_name, "error": str(exc)})
             continue
@@ -303,11 +306,11 @@ async def ingest_plan_batch(
     return {"sessions": sessions, "errors": errors}
 
 
-async def _run_generation_bg(session_id: str, confirmed_pages: list, user_id: str):
+async def _run_generation_bg(session_id: str, confirmed_pages: list, user_id: str, lang: str = "zh"):
     """后台执行阶段二生成（独立 db session，参照 agents executor 模式）。"""
     db = SessionLocal()
     try:
-        await ingest_service.run_ingest_generation(db, session_id, confirmed_pages, user_id)
+        await ingest_service.run_ingest_generation(db, session_id, confirmed_pages, user_id, lang=lang)
     finally:
         db.close()
 
@@ -316,6 +319,7 @@ async def _run_generation_bg(session_id: str, confirmed_pages: list, user_id: st
 async def ingest_generate(
     session_id: str,
     data: dict,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin", "editor"))
 ):
@@ -332,7 +336,7 @@ async def ingest_generate(
     if not isinstance(pages, list):
         raise HTTPException(status_code=400, detail="pages must be a list")
 
-    asyncio.create_task(_run_generation_bg(session_id, pages, user.id))
+    asyncio.create_task(_run_generation_bg(session_id, pages, user.id, lang=get_ui_lang(request)))
     return {"session_id": session_id}
 
 
@@ -382,6 +386,7 @@ def cancel_ingest_session(
 @ai_router.post("/query")
 async def query(
     data: dict,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
@@ -415,7 +420,7 @@ async def query(
             page_contents.append(f"[[{page.slug}]]\n{content}")
     pages_text = "\n\n---\n\n".join(page_contents)
 
-    answer_messages = prompts.query.build_answer_messages(pages_text, question)
+    answer_messages = prompts.query.build_answer_messages(pages_text, question, lang=get_ui_lang(request))
 
     audit_logger.log_ai_call(
         db, user.id, "query", config.id,
@@ -450,6 +455,7 @@ async def query(
 @ai_router.post("/query/save-synthesis")
 async def save_query_synthesis(
     data: dict,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin", "editor"))
 ):
@@ -462,7 +468,7 @@ async def save_query_synthesis(
 
     config = _get_default_config(db, user)
     result = await ingest_service.save_chat_answer_as_page(
-        db, question, answer, title, user, config
+        db, question, answer, title, user, config, lang=get_ui_lang(request)
     )
     if result["status"] != "created":
         raise HTTPException(status_code=500, detail=result.get("message", "保存失败"))
@@ -476,6 +482,7 @@ async def save_query_synthesis(
 
 @ai_router.post("/explore")
 async def explore(
+    request: Request,
     data: dict = {},
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin", "editor"))
@@ -488,14 +495,16 @@ async def explore(
         for p in pages
     ])
 
-    messages = prompts.explore.build_explore_messages(content, direction)
+    messages = prompts.explore.build_explore_messages(content, direction, lang=get_ui_lang(request))
     operator = user.username or user.email or str(user.id)
     with activity.running("explore", "知识探索", operator):
-        response = await _call_llm_tracked(db, user, "explore", config, messages)
+        # 探索结果条目多、英文输出更耗 token，4096 会截断 JSON 导致前端拿不到结果
+        response = await _call_llm_tracked(db, user, "explore", config, messages, max_tokens=16384)
 
-    try:
-        result = json.loads(response)
-    except json.JSONDecodeError:
+    if not response.strip():
+        raise HTTPException(status_code=502, detail="LLM 返回为空，请重试")
+    result = utils.parse_llm_json(response)
+    if not isinstance(result, dict):
         result = {"raw_response": response}
 
     audit_service.log_action(
@@ -579,6 +588,7 @@ def delete_exploration(
 @ai_router.post("/generate-plan")
 async def generate_plan(
     data: dict,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin", "editor"))
 ):
@@ -601,16 +611,15 @@ async def generate_plan(
 
     # Build messages and call LLM
     messages = prompts.generate_plan.build_generate_plan_messages(
-        wiki_content, exploration_result, recommendation, web_results
+        wiki_content, exploration_result, recommendation, web_results, lang=get_ui_lang(request)
     )
 
     operator = user.username or user.email or str(user.id)
     with activity.running("generate-plan", "生成研究计划", operator):
         response = await _call_llm_tracked(db, user, "plan", config, messages)
 
-    try:
-        plan_data = json.loads(response)
-    except json.JSONDecodeError:
+    plan_data = utils.parse_llm_json(response)
+    if not isinstance(plan_data, dict):
         raise HTTPException(status_code=500, detail="Failed to parse plan from LLM response")
 
     # Create plan
@@ -646,7 +655,7 @@ async def generate_plan(
     return {"plan_id": plan.id}
 
 
-def _normalize_questions(questions: list) -> list:
+def _normalize_questions(questions: list, lang: str = "zh") -> list:
     """Ensure all interview questions are choice-based with fallback options."""
     normalized = []
     for q in questions:
@@ -663,16 +672,17 @@ def _normalize_questions(questions: list) -> list:
         # If no choices provided, generate sensible defaults based on question content
         if q_type == "choice" and not choices:
             text = question_text.lower()
-            if any(k in text for k in ("是否", "有没有", "需不需要", "可不可以", "吗")):
-                choices = ["是", "否", "部分符合", "不确定"]
-            elif any(k in text for k in ("偏好", "倾向", "更喜欢", "选择")):
-                choices = ["选项 A", "选项 B", "选项 C", "以上皆可"]
-            elif any(k in text for k in ("时间", "周期", "多久", "时长")):
-                choices = ["1周内", "1个月内", "1-3个月", "3个月以上", "无明确期限"]
-            elif any(k in text for k in ("深度", "广度", "范围", "规模")):
-                choices = ["深入单一方向", "兼顾多个方向", "全面广泛了解", "视情况调整"]
+            en = lang == "en"
+            if any(k in text for k in ("是否", "有没有", "需不需要", "可不可以", "吗", "whether", "or not")):
+                choices = ["Yes", "No", "Partially", "Not sure"] if en else ["是", "否", "部分符合", "不确定"]
+            elif any(k in text for k in ("偏好", "倾向", "更喜欢", "选择", "prefer", "preference")):
+                choices = ["Option A", "Option B", "Option C", "Any is fine"] if en else ["选项 A", "选项 B", "选项 C", "以上皆可"]
+            elif any(k in text for k in ("时间", "周期", "多久", "时长", "timeline", "deadline", "time frame")):
+                choices = ["Within 1 week", "Within 1 month", "1-3 months", "3+ months", "No deadline"] if en else ["1周内", "1个月内", "1-3个月", "3个月以上", "无明确期限"]
+            elif any(k in text for k in ("深度", "广度", "范围", "规模", "depth", "breadth", "scope")):
+                choices = ["Deep dive into one area", "Cover multiple areas", "Broad overview", "Flexible"] if en else ["深入单一方向", "兼顾多个方向", "全面广泛了解", "视情况调整"]
             else:
-                choices = ["非常符合", "基本符合", "不太符合", "完全不符合"]
+                choices = ["Strongly agree", "Mostly agree", "Somewhat disagree", "Disagree"] if en else ["非常符合", "基本符合", "不太符合", "完全不符合"]
 
         normalized.append({
             "id": q.get("id", f"q{len(normalized) + 1}"),
@@ -680,7 +690,7 @@ def _normalize_questions(questions: list) -> list:
             "type": q_type,
             "choices": choices,
             "allow_other": q.get("allow_other", True),
-            "placeholder": q.get("placeholder", "请补充说明..."),
+            "placeholder": q.get("placeholder", "Add details..." if lang == "en" else "请补充说明..."),
         })
     return normalized
 
@@ -688,6 +698,7 @@ def _normalize_questions(questions: list) -> list:
 @ai_router.post("/plan-interview")
 async def plan_interview(
     data: dict,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin", "editor"))
 ):
@@ -698,24 +709,25 @@ async def plan_interview(
     recommendation = data.get("recommendation")
     config = _get_default_config(db, user)
     messages = prompts.interview_plan.build_interview_messages(
-        direction, exploration_result=exploration_result, recommendation=recommendation
+        direction, exploration_result=exploration_result, recommendation=recommendation,
+        lang=get_ui_lang(request),
     )
     response = await _call_llm_tracked(db, user, "plan_interview", config, messages)
-    try:
-        result = json.loads(response)
-    except json.JSONDecodeError:
+    result = utils.parse_llm_json(response)
+    if not isinstance(result, dict):
         result = {"raw_response": response}
 
     # Normalize questions to guarantee choice-based format
     raw_questions = result.get("questions", [])
     if raw_questions:
-        result["questions"] = _normalize_questions(raw_questions)
+        result["questions"] = _normalize_questions(raw_questions, lang=get_ui_lang(request))
     return result
 
 
 @ai_router.post("/create-plan")
 async def create_plan_from_interview(
     data: dict,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin", "editor"))
 ):
@@ -733,7 +745,7 @@ async def create_plan_from_interview(
         recommendation=data.get("recommendation"),
     )
     try:
-        run = await orchestrator.create_run(db, user, payload)
+        run = await orchestrator.create_run(db, user, payload, lang=get_ui_lang(request))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
@@ -742,6 +754,7 @@ async def create_plan_from_interview(
 
 @ai_router.post("/lint")
 async def lint(
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin", "editor"))
 ):
@@ -750,12 +763,12 @@ async def lint(
 
     operator = user.username or user.email or str(user.id)
     with activity.running("lint", "知识库体检", operator):
-        messages = prompts.lint.build_lint_messages(pages)
-        response = await _call_llm_tracked(db, user, "lint", config, messages)
+        messages = prompts.lint.build_lint_messages(pages, lang=get_ui_lang(request))
+        # 体检报告逐条列问题，大知识库 + 英文输出容易超 4096
+        response = await _call_llm_tracked(db, user, "lint", config, messages, max_tokens=16384)
 
-    try:
-        llm_result = json.loads(response)
-    except json.JSONDecodeError:
+    llm_result = utils.parse_llm_json(response)
+    if not isinstance(llm_result, dict):
         llm_result = {"raw_response": response}
 
     deterministic = lint_service.run_deterministic_checks(db, pages)
@@ -788,16 +801,16 @@ async def lint(
 @ai_router.post("/lint-suggest")
 async def lint_suggest(
     lint_result: dict,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin", "editor"))
 ):
     config = _get_default_config(db, user)
-    messages = lint_suggest_prompts.build_lint_suggest_messages(lint_result)
+    messages = lint_suggest_prompts.build_lint_suggest_messages(lint_result, lang=get_ui_lang(request))
     response = await _call_llm_tracked(db, user, "lint_suggest", config, messages)
 
-    try:
-        result = json.loads(response)
-    except json.JSONDecodeError:
+    result = utils.parse_llm_json(response)
+    if not isinstance(result, dict):
         result = {"raw_response": response}
 
     return result

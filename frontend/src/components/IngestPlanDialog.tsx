@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { FileText, Lightbulb, Layers, Tag, FileArchive } from 'lucide-react'
+import { useT } from '@/i18n'
 
 export interface IngestPlanPage {
   title: string
@@ -45,6 +46,7 @@ export function IngestPlanDialog({
   onConfirm,
   onCancel,
 }: IngestPlanDialogProps) {
+  const t = useT()
   const allNewTags = useMemo(
     () => [...new Set(groups.flatMap((g) => g.pages.flatMap((p) => p.new_tags)))].sort(),
     [groups],
@@ -100,9 +102,9 @@ export function IngestPlanDialog({
       <div className="relative w-full max-w-2xl rounded-lg border border-subtle bg-surface shadow-xl flex flex-col max-h-[85vh]">
         <div className="flex items-start justify-between gap-4 p-5 border-b border-subtle">
           <div>
-            <h3 className="text-base font-medium text-text-primary">确认摄入规划</h3>
+            <h3 className="text-base font-medium text-text-primary">{t('确认摄入规划')}</h3>
             <p className="mt-1 text-sm text-text-secondary">
-              AI 为 {groups.length} 份资料规划了 {totalPages} 个页面，请勾选要生成的页面并审核新标签
+              {t('AI 为 {files} 份资料规划了 {pages} 个页面，请勾选要生成的页面并审核新标签', { files: groups.length, pages: totalPages })}
             </p>
           </div>
         </div>
@@ -113,7 +115,7 @@ export function IngestPlanDialog({
               <div className="flex items-center gap-2 px-3 py-2 bg-raised border-b border-subtle">
                 <FileArchive size={12} strokeWidth={1.5} className="text-text-tertiary" />
                 <span className="text-xs font-medium text-text-secondary truncate">{g.label}</span>
-                <span className="text-[10px] text-text-muted">{g.pages.length} 页</span>
+                <span className="text-[10px] text-text-muted">{t('{n} 页', { n: g.pages.length })}</span>
               </div>
               <div className="divide-y divide-subtle">
                 {g.pages.map((p, i) => {
@@ -133,7 +135,7 @@ export function IngestPlanDialog({
                       />
                       <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm border text-[11px] ${badge.className}`}>
                         <Icon size={11} strokeWidth={1.5} />
-                        {badge.label}
+                        {t(badge.label)}
                       </span>
                       <span className="min-w-0">
                         <span className="block text-sm text-text-primary truncate">{p.title}</span>
@@ -144,10 +146,10 @@ export function IngestPlanDialog({
                       <span className="text-right">
                         {p.action === 'enrich' ? (
                           <span className="text-[11px] font-mono text-accent-amber" title={p.target_slug}>
-                            完善 {p.target_slug}
+                            {t('完善 {slug}', { slug: p.target_slug })}
                           </span>
                         ) : (
-                          <span className="text-[11px] text-accent-green">新建</span>
+                          <span className="text-[11px] text-accent-green">{t('新建')}</span>
                         )}
                       </span>
                     </label>
@@ -162,20 +164,20 @@ export function IngestPlanDialog({
               <div className="flex items-center justify-between mb-2">
                 <span className="flex items-center gap-1.5 text-xs font-medium text-text-secondary">
                   <Tag size={12} strokeWidth={1.5} className="text-accent-amber" />
-                  AI 提议的新标签（{approvedTags.size}/{allNewTags.length} 已批准）
+                  {t('AI 提议的新标签（{approved}/{total} 已批准）', { approved: approvedTags.size, total: allNewTags.length })}
                 </span>
                 <span className="flex gap-2">
                   <button
                     onClick={() => setApprovedTags(new Set(allNewTags))}
                     className="text-[11px] text-text-tertiary hover:text-accent-cyan transition-colors"
                   >
-                    全选
+                    {t('全选')}
                   </button>
                   <button
                     onClick={() => setApprovedTags(new Set())}
                     className="text-[11px] text-text-tertiary hover:text-accent-cyan transition-colors"
                   >
-                    全不选
+                    {t('全不选')}
                   </button>
                 </span>
               </div>
@@ -205,14 +207,14 @@ export function IngestPlanDialog({
 
         <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-subtle bg-raised/30 rounded-b-lg">
           <button onClick={onCancel} className="btn-secondary h-8 px-3 text-sm">
-            放弃
+            {t('放弃')}
           </button>
           <button
             onClick={handleConfirm}
             disabled={selectedCount === 0 || confirming}
             className="h-8 px-3 text-sm rounded font-medium transition-colors bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20 hover:bg-accent-cyan/20 disabled:opacity-50"
           >
-            {confirming ? '提交中…' : `确认生成（${selectedCount} 页）`}
+            {confirming ? t('提交中…') : t('确认生成（{n} 页）', { n: selectedCount })}
           </button>
         </div>
       </div>

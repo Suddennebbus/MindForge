@@ -30,6 +30,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { useSetPageWidth } from '@/components/PageWidth'
 import { toast } from '@/stores/toastStore'
 import { useTaskStore } from '@/stores/taskStore'
+import { useT } from '@/i18n'
 
 interface Comment {
   id: string
@@ -65,6 +66,7 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'active
 }
 
 export function PlanDetail() {
+  const t = useT()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const setReader = useSetPageWidth('reader')
@@ -104,7 +106,7 @@ export function PlanDetail() {
     runTask(readingsTaskKey, async () => {
       const resp = await api.post(`/plans/${id}/generate-readings`)
       await refreshPlan()
-      toast({ title: `已生成 ${resp.data.count} 篇文献`, variant: 'success' })
+      toast({ title: t('已生成 {count} 篇文献', { count: resp.data.count }), variant: 'success' })
       return resp.data
     })
   }
@@ -115,7 +117,7 @@ export function PlanDetail() {
       await refreshPlan()
       const { downloaded, errors } = resp.data
       toast({
-        title: `下载完成：成功 ${downloaded.length} 篇，失败 ${errors.length} 篇`,
+        title: t('下载完成：成功 {downloaded} 篇，失败 {failed} 篇', { downloaded: downloaded.length, failed: errors.length }),
         variant: errors.length ? 'warning' : 'success',
       })
       return resp.data
@@ -128,12 +130,12 @@ export function PlanDetail() {
       const resp = await api.post(`/ai/plan/${id}/readings/${index}/download`)
       await refreshPlan()
       if (resp.data.status === 'failed') {
-        toast({ title: `下载失败：${resp.data.error || '未知错误'}`, variant: 'error' })
+        toast({ title: t('下载失败：{error}', { error: resp.data.error || t('未知错误') }), variant: 'error' })
       } else {
-        toast({ title: '已下载到待审资料库', variant: 'success' })
+        toast({ title: t('已下载到待审资料库'), variant: 'success' })
       }
     } catch {
-      toast({ title: '下载失败', variant: 'error' })
+      toast({ title: t('下载失败'), variant: 'error' })
     } finally {
       setDownloadingIndex(null)
     }
@@ -148,7 +150,7 @@ export function PlanDetail() {
     setLoading(true)
     api.get(`/plans/${id}`)
       .then((resp) => setPlan(resp.data))
-      .catch(() => toast({ title: '加载计划失败', variant: 'error' }))
+      .catch(() => toast({ title: t('加载计划失败'), variant: 'error' }))
       .finally(() => setLoading(false))
     api.get(`/plans/${id}/comments`).then((resp) => {
       setComments(resp.data)
@@ -229,10 +231,10 @@ export function PlanDetail() {
       setAnnotationText('')
       window.getSelection()?.removeAllRanges()
       loadData()
-      toast({ title: '批注已添加', variant: 'success' })
+      toast({ title: t('批注已添加'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '添加批注失败',
+        title: t('添加批注失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -244,10 +246,10 @@ export function PlanDetail() {
     try {
       await api.delete(`/plans/${id}/annotations/${annotationId}`)
       loadData()
-      toast({ title: '批注已删除', variant: 'success' })
+      toast({ title: t('批注已删除'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '删除批注失败',
+        title: t('删除批注失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -276,10 +278,10 @@ export function PlanDetail() {
     try {
       await api.delete(`/plans/${plan.id}`)
       navigate('/plans')
-      toast({ title: '计划已删除', variant: 'success' })
+      toast({ title: t('计划已删除'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '删除失败',
+        title: t('删除失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -294,10 +296,10 @@ export function PlanDetail() {
     try {
       await api.put(`/plans/${plan.id}`, { status: newStatus })
       setPlan({ ...plan, status: newStatus as Plan['status'] })
-      toast({ title: '状态已更新', variant: 'success' })
+      toast({ title: t('状态已更新'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '更新失败',
+        title: t('更新失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -312,10 +314,10 @@ export function PlanDetail() {
       await api.put(`/plans/${plan.id}`, { description: editDesc })
       setPlan({ ...plan, description: editDesc })
       setIsEditingDesc(false)
-      toast({ title: '描述已保存', variant: 'success' })
+      toast({ title: t('描述已保存'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '保存失败',
+        title: t('保存失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -338,7 +340,7 @@ export function PlanDetail() {
       setPlan({ ...plan, goals: newGoals })
     } catch (err: any) {
       toast({
-        title: '更新失败',
+        title: t('更新失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -354,7 +356,7 @@ export function PlanDetail() {
       loadData()
     } catch (err: any) {
       toast({
-        title: '评论失败',
+        title: t('评论失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -370,7 +372,7 @@ export function PlanDetail() {
       loadData()
     } catch (err: any) {
       toast({
-        title: '回复失败',
+        title: t('回复失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -382,10 +384,10 @@ export function PlanDetail() {
     try {
       await api.delete(`/plans/${id}/comments/${commentId}`)
       loadData()
-      toast({ title: '评论已删除', variant: 'success' })
+      toast({ title: t('评论已删除'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '删除失败',
+        title: t('删除失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -403,10 +405,10 @@ export function PlanDetail() {
   if (!plan) {
     return (
       <div className="py-12 text-center text-text-tertiary">
-        <p>计划不存在</p>
+        <p>{t('计划不存在')}</p>
         <button onClick={() => navigate('/plans')} className="btn-secondary mt-4 h-8 px-3 text-xs">
           <ArrowLeft size={14} className="mr-1.5" />
-          返回列表
+          {t('返回列表')}
         </button>
       </div>
     )
@@ -421,7 +423,7 @@ export function PlanDetail() {
         icon={ClipboardList}
         meta={
           <>
-            <StatusBadge variant={cfg.variant}>{cfg.label}</StatusBadge>
+            <StatusBadge variant={cfg.variant}>{t(cfg.label)}</StatusBadge>
             {plan.direction && <span className="text-xs text-text-tertiary">{plan.direction}</span>}
           </>
         }
@@ -430,7 +432,7 @@ export function PlanDetail() {
             <Link
               to="/plans"
               className="btn-ghost h-8 w-8 !px-0 flex items-center justify-center"
-              aria-label="返回"
+              aria-label={t('返回')}
             >
               <ArrowLeft size={15} strokeWidth={1.5} />
             </Link>
@@ -443,7 +445,7 @@ export function PlanDetail() {
                 className="h-8 px-3 text-xs font-medium rounded border border-subtle text-text-secondary hover:text-text-primary hover:bg-hover flex items-center gap-1.5 transition-colors"
               >
                 <Pencil size={13} strokeWidth={1.5} className="mr-1" />
-                编辑描述
+                {t('编辑描述')}
               </button>
             )}
             <select
@@ -453,14 +455,14 @@ export function PlanDetail() {
               className="input h-8 text-xs"
             >
               {statusOptions.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
+                <option key={s.value} value={s.value}>{t(s.label)}</option>
               ))}
             </select>
             {canEdit && (
               <button
                 onClick={() => setShowDelete(true)}
                 className="h-8 w-8 flex items-center justify-center rounded border border-accent-red/20 text-accent-red hover:bg-accent-red/10 transition-colors"
-                aria-label="删除计划"
+                aria-label={t('删除计划')}
               >
                 <Trash2 size={14} strokeWidth={1.5} />
               </button>
@@ -475,7 +477,7 @@ export function PlanDetail() {
             {(plan.description || isEditingDesc) && (
               <div className="mb-6 relative">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] uppercase tracking-wider text-text-tertiary">描述</span>
+                  <span className="text-[11px] uppercase tracking-wider text-text-tertiary">{t('描述')}</span>
                   {isEditingDesc && (
                     <div className="flex gap-1.5">
                       <button
@@ -483,7 +485,7 @@ export function PlanDetail() {
                         className="btn-ghost h-7 px-2 text-xs"
                       >
                         <X size={12} strokeWidth={1.5} className="mr-1" />
-                        取消
+                        {t('取消')}
                       </button>
                       <button
                         onClick={handleSaveDescription}
@@ -491,7 +493,7 @@ export function PlanDetail() {
                         className="btn-primary h-7 px-2 text-xs"
                       >
                         <Save size={12} strokeWidth={1.5} className="mr-1" />
-                        {saving ? '保存中…' : '保存'}
+                        {saving ? t('保存中…') : t('保存')}
                       </button>
                     </div>
                   )}
@@ -501,7 +503,7 @@ export function PlanDetail() {
                     value={editDesc}
                     onChange={(e) => setEditDesc(e.target.value)}
                     className="input w-full h-[60vh] resize-y py-2 font-mono text-sm"
-                    placeholder="输入计划描述，支持 Markdown..."
+                    placeholder={t('输入计划描述，支持 Markdown...')}
                   />
                 ) : (
                   <div className="relative">
@@ -538,12 +540,12 @@ export function PlanDetail() {
                         })()}
                       >
                         <p className="text-xs text-text-muted mb-2 truncate max-w-[220px]">
-                          选中: {selection.text.slice(0, 40)}{selection.text.length > 40 ? '...' : ''}
+                          {t('选中: {text}', { text: selection.text.slice(0, 40) + (selection.text.length > 40 ? '...' : '') })}
                         </p>
                         <textarea
                           value={annotationText}
                           onChange={(e) => setAnnotationText(e.target.value)}
-                          placeholder="输入批注..."
+                          placeholder={t('输入批注...')}
                           className="input w-full h-20 resize-none text-sm mb-2"
                           autoFocus
                           onKeyDown={(e) => {
@@ -560,7 +562,7 @@ export function PlanDetail() {
                             }}
                             className="btn-ghost text-xs h-7 px-2"
                           >
-                            取消
+                            {t('取消')}
                           </button>
                           <button
                             onClick={handleCreateAnnotation}
@@ -568,7 +570,7 @@ export function PlanDetail() {
                             className="btn-primary text-xs h-7 px-2 disabled:opacity-50"
                           >
                             <Send size={12} className="mr-1" />
-                            添加批注
+                            {t('添加批注')}
                           </button>
                         </div>
                       </div>
@@ -580,7 +582,7 @@ export function PlanDetail() {
 
             {plan.research_questions?.length > 0 && (
               <div className="mb-6">
-                <span className="text-[11px] uppercase tracking-wider text-text-tertiary">核心研究问题</span>
+                <span className="text-[11px] uppercase tracking-wider text-text-tertiary">{t('核心研究问题')}</span>
                 <div className="mt-2 space-y-2">
                   {plan.research_questions.map((q, i) => (
                     <div key={i} className="border-l-2 border-accent-cyan pl-3 py-1">
@@ -593,7 +595,7 @@ export function PlanDetail() {
 
             {plan.methodology && (
               <div className="mb-6">
-                <span className="text-[11px] uppercase tracking-wider text-text-tertiary">研究方法</span>
+                <span className="text-[11px] uppercase tracking-wider text-text-tertiary">{t('研究方法')}</span>
                 <div className="mt-2 text-sm text-text-secondary leading-relaxed bg-inset rounded p-3 border border-subtle">
                   {plan.methodology}
                 </div>
@@ -602,7 +604,7 @@ export function PlanDetail() {
 
             {plan.goals?.length > 0 && (
               <div className="mb-6">
-                <span className="text-[11px] uppercase tracking-wider text-text-tertiary">研究目标</span>
+                <span className="text-[11px] uppercase tracking-wider text-text-tertiary">{t('研究目标')}</span>
                 <div className="mt-2 space-y-1">
                   {plan.goals.map((goal, i) => {
                     const done = goal.startsWith('[x] ')
@@ -630,7 +632,7 @@ export function PlanDetail() {
 
             {plan.milestones?.length > 0 && (
               <div className="mb-6">
-                <span className="text-[11px] uppercase tracking-wider text-text-tertiary">里程碑</span>
+                <span className="text-[11px] uppercase tracking-wider text-text-tertiary">{t('里程碑')}</span>
                 <div className="mt-2 space-y-2">
                   {plan.milestones.map((m, i) => (
                     <div key={i} className="flex items-start gap-2">
@@ -644,7 +646,7 @@ export function PlanDetail() {
 
             {plan.key_challenges?.length > 0 && (
               <div className="mb-6">
-                <span className="text-[11px] uppercase tracking-wider text-text-tertiary">关键挑战</span>
+                <span className="text-[11px] uppercase tracking-wider text-text-tertiary">{t('关键挑战')}</span>
                 <div className="mt-2 space-y-2">
                   {plan.key_challenges.map((c, i) => (
                     <div key={i} className="border-l-2 border-accent-amber pl-3 py-1">
@@ -657,7 +659,7 @@ export function PlanDetail() {
 
             {plan.expected_contributions?.length > 0 && (
               <div className="mb-6">
-                <span className="text-[11px] uppercase tracking-wider text-text-tertiary">预期贡献</span>
+                <span className="text-[11px] uppercase tracking-wider text-text-tertiary">{t('预期贡献')}</span>
                 <div className="mt-2 space-y-2">
                   {plan.expected_contributions.map((c, i) => (
                     <div key={i} className="flex items-start gap-2">
@@ -671,7 +673,7 @@ export function PlanDetail() {
 
             {plan.knowledge_gaps?.length > 0 && (
               <div className="mb-6">
-                <span className="text-[11px] uppercase tracking-wider text-text-tertiary">知识缺口</span>
+                <span className="text-[11px] uppercase tracking-wider text-text-tertiary">{t('知识缺口')}</span>
                 <div className="mt-2 space-y-2">
                   {plan.knowledge_gaps.map((gap, i) => (
                     <div key={i} className="border-l-2 border-accent-red pl-3 py-1">
@@ -685,7 +687,7 @@ export function PlanDetail() {
             {(plan.suggested_readings?.length > 0 || canEdit) && (
               <div className="mb-6">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] uppercase tracking-wider text-text-tertiary">推荐阅读</span>
+                  <span className="text-[11px] uppercase tracking-wider text-text-tertiary">{t('推荐阅读')}</span>
                   {canEdit && (
                     <div className="flex items-center gap-2">
                       {plan.suggested_readings?.some((r) => r.url && r.status !== 'downloaded') && (
@@ -697,7 +699,7 @@ export function PlanDetail() {
                           {downloadTask?.status === 'running'
                             ? <Loader2 size={12} className="animate-spin" />
                             : <Download size={12} />}
-                          一键下载全部
+                          {t('一键下载全部')}
                         </button>
                       )}
                       <button
@@ -708,7 +710,7 @@ export function PlanDetail() {
                         {readingsTask?.status === 'running'
                           ? <Loader2 size={12} className="animate-spin" />
                           : <RefreshCw size={12} />}
-                        {plan.suggested_readings?.length ? '重新生成清单' : '生成文献清单'}
+                        {plan.suggested_readings?.length ? t('重新生成清单') : t('生成文献清单')}
                       </button>
                     </div>
                   )}
@@ -753,7 +755,7 @@ export function PlanDetail() {
                                 className="inline-flex items-center gap-1 px-2 py-1 rounded border border-subtle text-xs text-text-secondary hover:border-accent-cyan/30 hover:text-accent-cyan transition-colors"
                               >
                                 <FileText size={12} />
-                                查看资料
+                                {t('查看资料')}
                               </Link>
                             ) : canEdit && r.url ? (
                               <button
@@ -764,7 +766,7 @@ export function PlanDetail() {
                                 {downloadingIndex === i
                                   ? <Loader2 size={12} className="animate-spin" />
                                   : <Download size={12} />}
-                                {r.status === 'failed' ? '重试' : '下载'}
+                                {r.status === 'failed' ? t('重试') : t('下载')}
                               </button>
                             ) : null}
                           </div>
@@ -773,7 +775,7 @@ export function PlanDetail() {
                     ))
                   ) : (
                     <p className="text-xs text-text-tertiary">
-                      {readingsTask?.status === 'running' ? '正在检索并筛选文献...' : '暂无文献清单，点击右上角「生成文献清单」按钮生成。'}
+                      {readingsTask?.status === 'running' ? t('正在检索并筛选文献...') : t('暂无文献清单，点击右上角「生成文献清单」按钮生成。')}
                     </p>
                   )}
                 </div>
@@ -782,7 +784,7 @@ export function PlanDetail() {
 
             {plan.related_slugs?.length > 0 && (
               <div className="mb-6">
-                <span className="text-[11px] uppercase tracking-wider text-text-tertiary">关联页面</span>
+                <span className="text-[11px] uppercase tracking-wider text-text-tertiary">{t('关联页面')}</span>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {plan.related_slugs.map((slug) => (
                     <Link
@@ -800,7 +802,7 @@ export function PlanDetail() {
 
             <div className="mt-6 pt-4 border-t border-subtle">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-text-primary">讨论 ({comments.length})</span>
+                <span className="text-sm font-medium text-text-primary">{t('讨论 ({count})', { count: comments.length })}</span>
               </div>
 
               <div className="space-y-3 mb-4">
@@ -828,7 +830,7 @@ export function PlanDetail() {
                               className="text-xs text-text-muted hover:text-accent-cyan flex items-center gap-1 transition-colors"
                             >
                               <MessageCircle size={11} />
-                              回复
+                              {t('回复')}
                             </button>
                             {canDelete && (
                               <button
@@ -836,7 +838,7 @@ export function PlanDetail() {
                                 className="text-xs text-text-muted hover:text-accent-red flex items-center gap-1 transition-colors"
                               >
                                 <Trash2 size={11} />
-                                删除
+                                {t('删除')}
                               </button>
                             )}
                           </div>
@@ -847,7 +849,7 @@ export function PlanDetail() {
                                 value={replyText}
                                 onChange={(e) => setReplyText(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleSubmitReply(c.id)}
-                                placeholder={`回复 ${c.username}...`}
+                                placeholder={t('回复 {username}...', { username: c.username })}
                                 className="input flex-1"
                                 autoFocus
                               />
@@ -855,7 +857,7 @@ export function PlanDetail() {
                                 <Send size={14} strokeWidth={1.5} />
                               </button>
                               <button onClick={() => setReplyingTo(null)} className="btn-ghost h-8 px-2 text-xs">
-                                取消
+                                {t('取消')}
                               </button>
                             </div>
                           )}
@@ -880,7 +882,7 @@ export function PlanDetail() {
                                           className="text-xs text-text-muted hover:text-accent-red flex items-center gap-1 mt-0.5 transition-colors"
                                         >
                                           <Trash2 size={10} />
-                                          删除
+                                          {t('删除')}
                                         </button>
                                       )}
                                     </div>
@@ -895,7 +897,7 @@ export function PlanDetail() {
                   )
                 })}
                 {comments.length === 0 && (
-                  <p className="text-sm text-text-muted text-center py-4">暂无评论，发表第一条评论吧</p>
+                  <p className="text-sm text-text-muted text-center py-4">{t('暂无评论，发表第一条评论吧')}</p>
                 )}
               </div>
 
@@ -905,7 +907,7 @@ export function PlanDetail() {
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSubmitComment()}
-                  placeholder="输入评论..."
+                  placeholder={t('输入评论...')}
                   className="input flex-1"
                 />
                 <button onClick={handleSubmitComment} className="btn-primary h-8 px-3">
@@ -915,7 +917,7 @@ export function PlanDetail() {
             </div>
 
             <div className="mt-6 pt-4 border-t border-subtle text-xs text-text-muted">
-              创建于 {plan.created_at.slice(0, 10)} · 更新于 {plan.updated_at.slice(0, 10)}
+              {t('创建于 {created} · 更新于 {updated}', { created: plan.created_at.slice(0, 10), updated: plan.updated_at.slice(0, 10) })}
             </div>
           </div>
         </div>
@@ -925,7 +927,7 @@ export function PlanDetail() {
             <button
               onClick={() => setPanelCollapsed(false)}
               className="btn-ghost !px-2 h-8"
-              title="展开批注面板"
+              title={t('展开批注面板')}
             >
               <PanelLeftOpen size={16} strokeWidth={1.5} />
             </button>
@@ -936,12 +938,12 @@ export function PlanDetail() {
               <div className="px-3 h-9 flex items-center justify-between border-b border-subtle bg-raised/30">
                 <div className="flex items-center gap-2">
                   <MessageSquarePlus size={14} strokeWidth={1.5} className="text-accent-cyan" />
-                  <span className="text-xs font-medium text-text-primary">批注 ({annotations.length})</span>
+                  <span className="text-xs font-medium text-text-primary">{t('批注 ({count})', { count: annotations.length })}</span>
                 </div>
                 <button
                   onClick={() => setPanelCollapsed(true)}
                   className="p-1 rounded hover:bg-hover text-text-tertiary"
-                  title="收起批注面板"
+                  title={t('收起批注面板')}
                 >
                   <PanelLeftClose size={14} strokeWidth={1.5} />
                 </button>
@@ -949,7 +951,7 @@ export function PlanDetail() {
               <div className="p-2 space-y-2 max-h-[70vh] overflow-auto">
                 {annotations.length === 0 && (
                   <p className="text-xs text-text-muted text-center py-4">
-                    暂无批注，在描述中选中文本后添加
+                    {t('暂无批注，在描述中选中文本后添加')}
                   </p>
                 )}
                 {annotations.map((ann) => {
@@ -985,7 +987,7 @@ export function PlanDetail() {
                               handleDeleteAnnotation(ann.id)
                             }}
                             className="p-1 rounded text-text-muted hover:text-accent-red hover:bg-accent-red/10 transition-colors"
-                            title="删除批注"
+                            title={t('删除批注')}
                           >
                             <Trash2 size={12} />
                           </button>
@@ -1002,10 +1004,10 @@ export function PlanDetail() {
 
       <ConfirmDialog
         open={showDelete}
-        title="删除研究计划"
-        description={`确定删除「${plan.title}」？此操作不可恢复。`}
+        title={t('删除研究计划')}
+        description={t('确定删除「{title}」？此操作不可恢复。', { title: plan.title })}
         variant="danger"
-        confirmLabel="删除"
+        confirmLabel={t('删除')}
         onConfirm={handleDeletePlan}
         onCancel={() => setShowDelete(false)}
       />

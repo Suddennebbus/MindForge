@@ -1,5 +1,6 @@
 import { MessageSquare, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useT } from '@/i18n'
 
 interface Comment {
   id: string
@@ -42,10 +43,11 @@ export function CommentThread({ comments, className }: CommentThreadProps) {
 }
 
 export function CommentCount({ count }: { count: number }) {
+  const t = useT()
   return (
     <div className="flex items-center gap-1.5 text-xs text-text-tertiary">
       <MessageSquare size={14} strokeWidth={1.5} />
-      <span>{count} 条讨论</span>
+      <span>{t('{count} 条讨论', { count })}</span>
     </div>
   )
 }

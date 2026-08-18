@@ -6,6 +6,7 @@ import { api } from '@/api/client'
 import { useAuthStore } from '@/stores/authStore'
 import { useChatStore, type Message, type SavedPage } from '@/stores/chatStore'
 import { toast } from '@/stores/toastStore'
+import { useT } from '@/i18n'
 
 interface ChatMessageProps {
   message: Message
@@ -15,7 +16,8 @@ interface ChatMessageProps {
 }
 
 // 回答末尾的提议格式：提议：可将上述内容保存为综合页面「标题」，...
-const PROPOSAL_RE = /提议[：:][^\n]*「([^」]+)」/
+// 英文界面下 LLM 输出 Proposal: ... 「Title」，两种标签都要识别（标题定界符「」不变）
+const PROPOSAL_RE = /(?:提议|proposal)[:：][^\n]*「([^」]+)」/i
 
 function extractProposal(content: string): string | null {
   const match = content.match(PROPOSAL_RE)
@@ -23,6 +25,7 @@ function extractProposal(content: string): string | null {
 }
 
 export function ChatMessage({ message, messageIndex, question, streaming }: ChatMessageProps) {
+  const t = useT()
   const [copied, setCopied] = useState(false)
   const [saving, setSaving] = useState(false)
   const isUser = message.role === 'user'
@@ -51,13 +54,13 @@ export function ChatMessage({ message, messageIndex, question, streaming }: Chat
       const pages = (resp.data as { pages?: SavedPage[] }).pages || []
       updateMessage(messageIndex, { savedPages: pages })
       toast({
-        title: '已保存到知识库',
+        title: t('已保存到知识库'),
         description: pages.map((p) => p.title).join('、'),
         variant: 'success',
       })
     } catch (err: any) {
       toast({
-        title: '保存失败',
+        title: t('保存失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -82,7 +85,7 @@ export function ChatMessage({ message, messageIndex, question, streaming }: Chat
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-xs text-text-muted mb-1">
-            {isUser ? '你' : 'Assistant'}
+            {isUser ? t('你') : 'Assistant'}
           </div>
           <div className="text-sm text-text-secondary leading-relaxed">
             {isUser ? (
@@ -95,7 +98,7 @@ export function ChatMessage({ message, messageIndex, question, streaming }: Chat
             savedPages && savedPages.length > 0 ? (
               <div className="mt-3 flex items-center gap-2 text-lg text-accent-green">
                 <CheckCircle size={20} strokeWidth={1.5} />
-                <span>已保存到知识库：</span>
+                <span>{t('已保存到知识库：')}</span>
                 {savedPages.map((p) => (
                   <Link
                     key={p.slug}
@@ -118,7 +121,7 @@ export function ChatMessage({ message, messageIndex, question, streaming }: Chat
                 ) : (
                   <BookPlus size={18} strokeWidth={1.5} />
                 )}
-                {saving ? '正在保存到知识库…' : '同意'}
+                {saving ? t('正在保存到知识库…') : t('同意')}
               </button>
             )
           )}
@@ -128,7 +131,7 @@ export function ChatMessage({ message, messageIndex, question, streaming }: Chat
               className="mt-1.5 flex items-center gap-1 text-[11px] text-text-muted hover:text-text-secondary transition-colors"
             >
               {copied ? <CheckCircle size={11} strokeWidth={1.5} /> : <Copy size={11} strokeWidth={1.5} />}
-              {copied ? '已复制' : '复制'}
+              {copied ? t('已复制') : t('复制')}
             </button>
           )}
         </div>

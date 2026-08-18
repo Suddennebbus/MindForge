@@ -102,6 +102,7 @@ async def select_readings(
     web_results: list,
     arxiv_results: list,
     llm_call: Callable[[list], Awaitable[str]],
+    lang: str = "zh",
 ) -> list:
     """LLM 筛选高价值文献。llm_call: async (messages) -> response_text。
 
@@ -112,7 +113,7 @@ async def select_readings(
     if not candidates:
         return []
     messages = prompts.reading_selection.build_reading_selection_messages(
-        direction, plan_context, candidates
+        direction, plan_context, candidates, lang=lang
     )
     try:
         response = await llm_call(messages)

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '@/api/client'
+import { useT, type Vars } from '@/i18n'
 import type { AgentRun, AgentRunStep } from '@/types'
 import { Loader2, CheckCircle2, XCircle, AlertCircle, Pause, Play, RotateCcw, Square } from 'lucide-react'
 
@@ -34,12 +35,13 @@ const STEP_RUNNING_HINT: Record<string, string> = {
   save_plan: '正在保存研究计划...',
 }
 
-function getStepDetail(step: AgentRunStep): string | null {
+function getStepDetail(step: AgentRunStep, t: (zh: string, vars?: Vars) => string): string | null {
   if (step.status === 'running') {
-    return STEP_RUNNING_HINT[step.name] || '正在执行...'
+    const hint = STEP_RUNNING_HINT[step.name]
+    return hint ? t(hint) : t('正在执行...')
   }
   if (step.status === 'paused') {
-    return '已暂停'
+    return t('已暂停')
   }
   if (step.status !== 'completed' || !step.output_json) {
     return null
@@ -47,27 +49,28 @@ function getStepDetail(step: AgentRunStep): string | null {
   try {
     const output = JSON.parse(step.output_json)
     if (step.name === 'query_expansion' && Array.isArray(output.search_queries)) {
-      return `生成 ${output.search_queries.length} 个检索词`
+      return t('生成 {n} 个检索词', { n: output.search_queries.length })
     }
     if (step.name === 'web_search' && Array.isArray(output.web_results)) {
-      return `找到 ${output.web_results.length} 条结果`
+      return t('找到 {n} 条结果', { n: output.web_results.length })
     }
     if (step.name === 'arxiv_search' && Array.isArray(output.arxiv_results)) {
-      return `找到 ${output.arxiv_results.length} 篇论文`
+      return t('找到 {n} 篇论文', { n: output.arxiv_results.length })
     }
     if (step.name === 'reading_selection' && Array.isArray(output.suggested_readings)) {
-      return `选定 ${output.suggested_readings.length} 篇文献`
+      return t('选定 {n} 篇文献', { n: output.suggested_readings.length })
     }
     if (step.name === 'save_plan' && output.plan_id) {
-      return '计划已保存'
+      return t('计划已保存')
     }
-    return '已完成'
+    return t('已完成')
   } catch {
-    return '已完成'
+    return t('已完成')
   }
 }
 
 export function AgentRunProgress({ runId, onComplete, onCancel }: AgentRunProgressProps) {
+  const t = useT()
   const navigate = useNavigate()
   const [run, setRun] = useState<AgentRun | null>(null)
   const [loading, setLoading] = useState(false)
@@ -123,7 +126,7 @@ export function AgentRunProgress({ runId, onComplete, onCancel }: AgentRunProgre
     return (
       <div className="py-12 text-center">
         <Loader2 size={28} strokeWidth={1.5} className="animate-spin text-accent-cyan mx-auto mb-3" />
-        <p className="text-sm text-text-secondary">正在启动 Agent Runtime...</p>
+        <p className="text-sm text-text-secondary">{t('正在启动 Agent Runtime...')}</p>
       </div>
     )
   }
@@ -136,26 +139,26 @@ export function AgentRunProgress({ runId, onComplete, onCancel }: AgentRunProgre
   const isCancelled = run.status === 'cancelled'
 
   const statusLabel = isCompleted
-    ? '已完成'
+    ? t('已完成')
     : isCancelled
-      ? '已停止'
+      ? t('已停止')
       : isFailed
-        ? '失败'
+        ? t('失败')
         : isPausing
-          ? '正在暂停...'
+          ? t('正在暂停...')
           : isPaused
-            ? '已暂停'
-            : '执行中'
+            ? t('已暂停')
+            : t('执行中')
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-text-secondary">
-            研究方向：<span className="text-text-primary font-medium">{run.direction || '研究计划'}</span>
+            {t('研究方向：')}<span className="text-text-primary font-medium">{run.direction || t('研究计划')}</span>
           </p>
           <p className="text-xs text-text-muted mt-1">
-            状态：<span className="font-medium text-text-primary">{statusLabel}</span>
+            {t('状态：')}<span className="font-medium text-text-primary">{statusLabel}</span>
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -167,7 +170,7 @@ export function AgentRunProgress({ runId, onComplete, onCancel }: AgentRunProgre
                 className="btn-ghost text-xs flex items-center gap-1"
               >
                 <Pause size={13} />
-                暂停
+                {t('暂停')}
               </button>
               <button
                 onClick={() => handleAction('cancel')}
@@ -175,7 +178,7 @@ export function AgentRunProgress({ runId, onComplete, onCancel }: AgentRunProgre
                 className="btn-ghost text-xs flex items-center gap-1 text-accent-red hover:text-accent-red"
               >
                 <Square size={13} />
-                停止
+                {t('停止')}
               </button>
             </>
           )}
@@ -185,7 +188,7 @@ export function AgentRunProgress({ runId, onComplete, onCancel }: AgentRunProgre
               className="btn-ghost text-xs flex items-center gap-1 opacity-60 cursor-not-allowed"
             >
               <Loader2 size={13} className="animate-spin" />
-              正在暂停
+              {t('正在暂停')}
             </button>
           )}
           {(isPaused || isFailed) && (
@@ -196,7 +199,7 @@ export function AgentRunProgress({ runId, onComplete, onCancel }: AgentRunProgre
                 className="btn-primary text-xs flex items-center gap-1"
               >
                 <Play size={13} />
-                继续
+                {t('继续')}
               </button>
               <button
                 onClick={() => handleAction('cancel')}
@@ -204,7 +207,7 @@ export function AgentRunProgress({ runId, onComplete, onCancel }: AgentRunProgre
                 className="btn-ghost text-xs flex items-center gap-1 text-accent-red hover:text-accent-red"
               >
                 <Square size={13} />
-                停止
+                {t('停止')}
               </button>
             </>
           )}
@@ -215,7 +218,7 @@ export function AgentRunProgress({ runId, onComplete, onCancel }: AgentRunProgre
               className="btn-ghost text-xs flex items-center gap-1"
             >
               <RotateCcw size={13} />
-              重试
+              {t('重试')}
             </button>
           )}
         </div>
@@ -223,7 +226,7 @@ export function AgentRunProgress({ runId, onComplete, onCancel }: AgentRunProgre
 
       <div className="space-y-2">
         {run.steps.map((step) => {
-          const detail = getStepDetail(step)
+          const detail = getStepDetail(step, t)
           return (
             <div
               key={step.id}
@@ -234,7 +237,7 @@ export function AgentRunProgress({ runId, onComplete, onCancel }: AgentRunProgre
               {renderStepIcon(step)}
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-text-primary">
-                  {STEP_LABELS[step.name] || step.name}
+                  {t(STEP_LABELS[step.name] || step.name)}
                 </p>
                 {detail && (
                   <p className={`text-xs mt-0.5 ${step.status === 'running' ? 'text-accent-cyan' : 'text-text-muted'}`}>
@@ -270,7 +273,7 @@ export function AgentRunProgress({ runId, onComplete, onCancel }: AgentRunProgre
             onClick={() => navigate(`/plans/${run.plan_id}`)}
             className="btn-primary text-sm"
           >
-            查看研究计划
+            {t('查看研究计划')}
           </button>
         </div>
       )}
@@ -278,7 +281,7 @@ export function AgentRunProgress({ runId, onComplete, onCancel }: AgentRunProgre
       {(isCancelled || isFailed) && onCancel && (
         <div className="flex justify-end">
           <button onClick={onCancel} className="btn-ghost text-sm">
-            关闭
+            {t('关闭')}
           </button>
         </div>
       )}

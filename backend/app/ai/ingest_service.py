@@ -261,6 +261,7 @@ async def save_chat_answer_as_page(
     suggested_title: str,
     user: User,
     config,
+    lang: str = "zh",
 ) -> dict:
     """Ingest an accepted chat answer into the wiki as a synthesis/concept page.
 
@@ -268,7 +269,7 @@ async def save_chat_answer_as_page(
     content rather than a parsed document.
     """
     messages = prompts.chat_ingest.build_chat_ingest_messages(
-        question, answer, _existing_tags(db), suggested_title
+        question, answer, _existing_tags(db), suggested_title, lang=lang
     )
 
     start_ms = time.time() * 1000
@@ -605,6 +606,7 @@ async def plan_ingest(
     raw: raw_models.RawFile,
     user: User,
     config,
+    lang: str = "zh",
 ) -> ai_models.IngestSession:
     """阶段一：1 次 LLM 调用生成页面规划，落库为 IngestSession（status=planned）。"""
     text = document_parser.parse_document(raw.storage_path)
@@ -622,6 +624,7 @@ async def plan_ingest(
         existing_tags,
         existing_pages,
         document_parser.parse_document_metadata(raw.storage_path),
+        lang=lang,
     )
     response = await _llm_complete_tracked(
         db, user, "ingest_plan", config, messages, INGEST_PLAN_MAX_TOKENS,
@@ -686,9 +689,11 @@ async def _generate_page_body(
     allowed_tags: list[str],
     existing_page_content: str | None = None,
     sibling_pages: list | None = None,
+    lang: str = "zh",
 ) -> str:
     messages = prompts.ingest.build_ingest_page_messages(
-        text, raw.original_name, spec, allowed_tags, existing_page_content, sibling_pages
+        text, raw.original_name, spec, allowed_tags, existing_page_content, sibling_pages,
+        lang=lang,
     )
     body = await _llm_complete_tracked(
         db, user, "ingest_page", config, messages, INGEST_PAGE_MAX_TOKENS,
@@ -708,8 +713,9 @@ async def _ingest_new_page(
     source_path: str,
     reserved_slugs: set[str],
     sibling_pages: list | None = None,
+    lang: str = "zh",
 ) -> wiki_models.WikiPage:
-    body = await _generate_page_body(db, user, config, text, raw, spec, allowed_tags, sibling_pages=sibling_pages)
+    body = await _generate_page_body(db, user, config, text, raw, spec, allowed_tags, sibling_pages=sibling_pages, lang=lang)
     slug = _unique_slug(db, _slugify(spec["title"]), reserved_slugs)
     reserved_slugs.add(slug)
     body, body_link_slugs = _normalize_links(body)
@@ -744,6 +750,7 @@ async def _ingest_enrich_page(
     allowed_tags: list[str],
     source_path: str,
     sibling_pages: list | None = None,
+    lang: str = "zh",
 ) -> wiki_models.WikiPage | None:
     page = db.query(wiki_models.WikiPage).filter(
         wiki_models.WikiPage.slug == spec["target_slug"]
@@ -753,7 +760,7 @@ async def _ingest_enrich_page(
     old_content = wiki_storage.read_page(page.file_path)
     body = await _generate_page_body(
         db, user, config, text, raw, spec, allowed_tags,
-        existing_page_content=old_content, sibling_pages=sibling_pages,
+        existing_page_content=old_content, sibling_pages=sibling_pages, lang=lang,
     )
     body, body_link_slugs = _normalize_links(body)
 
@@ -794,6 +801,7 @@ async def run_ingest_generation(
     session_id: str,
     confirmed_pages: list[dict],
     user_id: str,
+    lang: str = "zh",
 ) -> None:
     """阶段二：按用户确认的页面清单逐页生成（后台任务，独立 db session）。
 
@@ -881,7 +889,7 @@ async def run_ingest_generation(
                 if spec.get("action") == "enrich" and spec.get("target_slug"):
                     page = await _ingest_enrich_page(
                         db, user, config, text, raw, spec, allowed_tags, source_path,
-                        sibling_pages=sibling_pages,
+                        sibling_pages=sibling_pages, lang=lang,
                     )
                     if page is None:
                         raise ValueError(f"target page not found: {spec['target_slug']}")
@@ -891,7 +899,7 @@ async def run_ingest_generation(
                 else:
                     page = await _ingest_new_page(
                         db, user, config, text, raw, spec, allowed_tags, source_path, reserved_slugs,
-                        sibling_pages=sibling_pages,
+                        sibling_pages=sibling_pages, lang=lang,
                     )
                     created_pages.append(page)
                     if raw not in page.raw_files:

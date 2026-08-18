@@ -1,3 +1,5 @@
+from app.ai.lang import lang_instruction
+
 LINT_SUGGEST_SYSTEM = """你是 MindForge 的体检修复顾问。根据体检报告，为每个问题生成具体、可操作的修复建议。
 
 对每类问题，给出：
@@ -32,8 +34,8 @@ LINT_SUGGEST_SYSTEM = """你是 MindForge 的体检修复顾问。根据体检�
 }"""
 
 
-def build_lint_suggest_messages(lint_result: dict) -> list:
+def build_lint_suggest_messages(lint_result: dict, lang: str = "zh") -> list:
     return [
-        {"role": "system", "content": LINT_SUGGEST_SYSTEM},
+        {"role": "system", "content": LINT_SUGGEST_SYSTEM + lang_instruction(lang)},
         {"role": "user", "content": f"体检报告：\n\n{__import__('json').dumps(lint_result, ensure_ascii=False, indent=2)}"}
     ]

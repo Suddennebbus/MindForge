@@ -21,6 +21,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { toast } from '@/stores/toastStore'
 import { useTaskStore } from '@/stores/taskStore'
 import { useInterviewStore } from '@/stores/interviewStore'
+import { useT } from '@/i18n'
 
 interface ExploreResult {
   knowledge_areas?: Array<{
@@ -49,6 +50,7 @@ function parseResult(json: string): ExploreResult | null {
 }
 
 export function Explore() {
+  const t = useT()
   const location = useLocation()
   const navigate = useNavigate()
   const passed = location.state?.exploration as Exploration | undefined
@@ -74,9 +76,9 @@ export function Explore() {
       window.history.replaceState({}, document.title)
     } else {
       // 从其他页面切回时，恢复上次已完成的探索结果
-      const t = useTaskStore.getState().tasks['explore']
-      if (t?.status === 'success' && t.data) {
-        setResult(t.data)
+      const task = useTaskStore.getState().tasks['explore']
+      if (task?.status === 'success' && task.data) {
+        setResult(task.data)
       }
     }
   }, [passed])
@@ -85,7 +87,7 @@ export function Explore() {
     setHistoryLoading(true)
     api.get('/ai/explorations')
       .then((resp) => setExplorations(resp.data as Exploration[]))
-      .catch(() => toast({ title: '加载探索历史失败', variant: 'error' }))
+      .catch(() => toast({ title: t('加载探索历史失败'), variant: 'error' }))
       .finally(() => setHistoryLoading(false))
   }
 
@@ -97,6 +99,10 @@ export function Explore() {
     const newResult = await useTaskStore.getState().runTask('explore', async () => {
       const resp = await api.post('/ai/explore', { direction: direction || undefined })
       const data = resp.data as ExploreResult
+      // LLM 输出截断/为空时后端只回 raw_response，这种结果不可展示，不入库、直接报错让用户重试
+      if (!data.knowledge_areas && !data.gaps && !data.recommendations) {
+        throw new Error(t('探索结果解析失败，请重试'))
+      }
       try {
         await api.post('/ai/explorations', {
           direction: direction || undefined,
@@ -104,7 +110,7 @@ export function Explore() {
         })
       } catch (saveErr: any) {
         toast({
-          title: '探索结果保存失败',
+          title: t('探索结果保存失败'),
           description: saveErr.response?.data?.detail || String(saveErr),
           variant: 'warning',
         })
@@ -118,7 +124,7 @@ export function Explore() {
     } else {
       const err = useTaskStore.getState().tasks['explore']?.error
       if (err) {
-        toast({ title: '探索失败', description: err, variant: 'error' })
+        toast({ title: t('探索失败'), description: err, variant: 'error' })
       }
     }
   }
@@ -144,7 +150,7 @@ export function Explore() {
   const handleSelectHistory = (exploration: Exploration) => {
     const parsed = parseResult(exploration.result_json)
     if (!parsed) {
-      toast({ title: '无法解析该探索结果', variant: 'warning' })
+      toast({ title: t('无法解析该探索结果'), variant: 'warning' })
       return
     }
     setDirection(exploration.direction || '')
@@ -161,10 +167,10 @@ export function Explore() {
         setResult(null)
         setActiveId(null)
       }
-      toast({ title: '已删除探索记录', variant: 'success' })
+      toast({ title: t('已删除探索记录'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '删除失败',
+        title: t('删除失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -176,18 +182,18 @@ export function Explore() {
   const columns = [
     {
       key: 'direction',
-      header: '方向',
+      header: t('方向'),
       render: (e: Exploration) => (
         <div className="min-w-0">
           <div className={`text-sm font-medium truncate ${activeId === e.id ? 'text-accent-cyan' : 'text-text-primary'}`}>
-            {e.direction || '全局探索'}
+            {e.direction || t('全局探索')}
           </div>
         </div>
       ),
     },
     {
       key: 'summary',
-      header: '摘要',
+      header: t('摘要'),
       width: '200px',
       render: (e: Exploration) => {
         const parsed = parseResult(e.result_json)
@@ -196,9 +202,9 @@ export function Explore() {
         const recs = parsed?.recommendations?.length || 0
         return (
           <div className="flex items-center gap-2 text-xs text-text-tertiary">
-            {areas > 0 && <span>{areas} 个领域</span>}
-            {gaps > 0 && <span>{gaps} 个缺口</span>}
-            {recs > 0 && <span>{recs} 条建议</span>}
+            {areas > 0 && <span>{t('{n} 个领域', { n: areas })}</span>}
+            {gaps > 0 && <span>{t('{n} 个缺口', { n: gaps })}</span>}
+            {recs > 0 && <span>{t('{n} 条建议', { n: recs })}</span>}
             {areas === 0 && gaps === 0 && recs === 0 && <span>—</span>}
           </div>
         )
@@ -206,7 +212,7 @@ export function Explore() {
     },
     {
       key: 'time',
-      header: '时间',
+      header: t('时间'),
       width: '120px',
       render: (e: Exploration) => (
         <span className="flex items-center gap-1 text-xs text-text-tertiary">
@@ -228,7 +234,7 @@ export function Explore() {
               setDeleteTarget(e)
             }}
             className="p-1.5 rounded hover:bg-accent-red/10 text-text-tertiary hover:text-accent-red transition-colors"
-            aria-label="删除"
+            aria-label={t('删除')}
           >
             <Trash2 size={14} strokeWidth={1.5} />
           </button>
@@ -239,14 +245,14 @@ export function Explore() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="探索"
-        description="发现知识缺口与研究机会"
+        title={t('探索')}
+        description={t('发现知识缺口与研究机会')}
         icon={Compass}
         actions={
           result && (
             <button onClick={handleReset} className="btn-ghost">
               <X size={14} strokeWidth={1.5} className="mr-1.5" />
-              重置
+              {t('重置')}
             </button>
           )
         }
@@ -256,17 +262,17 @@ export function Explore() {
         <div className="flex items-center gap-3 px-4 py-3 rounded border border-accent-cyan/30 bg-accent-cyan/10">
           <Sparkles size={16} className="text-accent-cyan shrink-0" strokeWidth={1.5} />
           <div className="min-w-0 flex-1">
-            <span className="block text-xs text-text-tertiary">采访进行中</span>
-            <span className="block text-sm font-medium text-text-primary truncate">{interviewDirection || '未命名方向'}</span>
+            <span className="block text-xs text-text-tertiary">{t('采访进行中')}</span>
+            <span className="block text-sm font-medium text-text-primary truncate">{interviewDirection || t('未命名方向')}</span>
           </div>
           <button onClick={handleResumeInterview} className="btn-secondary h-7 px-2.5 text-xs shrink-0">
-            继续采访
+            {t('继续采访')}
           </button>
           <button
             onClick={() => useInterviewStore.getState().dismiss()}
             className="btn-ghost h-7 px-2.5 text-xs shrink-0"
           >
-            放弃
+            {t('放弃')}
           </button>
         </div>
       )}
@@ -281,7 +287,7 @@ export function Explore() {
               handleExplore()
             }
           }}
-          placeholder={isViewer ? '游客仅可查看探索历史' : '输入研究方向（可选，留空则全局探索）'}
+          placeholder={isViewer ? t('游客仅可查看探索历史') : t('输入研究方向（可选，留空则全局探索）')}
           className="input flex-1"
           disabled={isViewer}
         />
@@ -292,7 +298,7 @@ export function Explore() {
             ) : (
               <Sparkles size={14} strokeWidth={1.5} className="mr-1.5" />
             )}
-            {isLoading ? '分析中...' : '探索'}
+            {isLoading ? t('分析中...') : t('探索')}
           </button>
         )}
       </div>
@@ -303,7 +309,7 @@ export function Explore() {
             <div className="card">
               <div className="flex items-center gap-2 mb-3">
                 <BookOpen size={15} className="text-wiki-concept" strokeWidth={1.5} />
-                <h3 className="text-subtitle">知识覆盖</h3>
+                <h3 className="text-subtitle">{t('知识覆盖')}</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {result.knowledge_areas.map((area) => (
@@ -322,7 +328,7 @@ export function Explore() {
             <div className="card">
               <div className="flex items-center gap-2 mb-3">
                 <AlertTriangle size={15} className="text-accent-amber" strokeWidth={1.5} />
-                <h3 className="text-subtitle">知识缺口</h3>
+                <h3 className="text-subtitle">{t('知识缺口')}</h3>
               </div>
               <div className="space-y-2">
                 {result.gaps.map((gap, i) => (
@@ -342,7 +348,7 @@ export function Explore() {
             <div className="card">
               <div className="flex items-center gap-2 mb-3">
                 <Target size={15} className="text-accent-cyan" strokeWidth={1.5} />
-                <h3 className="text-subtitle">研究建议</h3>
+                <h3 className="text-subtitle">{t('研究建议')}</h3>
               </div>
               <div className="space-y-2">
                 {result.recommendations.map((rec, i) => (
@@ -369,7 +375,7 @@ export function Explore() {
                         className="btn-secondary h-7 px-2.5 text-xs flex items-center gap-1 shrink-0"
                       >
                         <Sparkles size={12} strokeWidth={1.5} />
-                        生成研究计划
+                        {t('生成研究计划')}
                       </button>
                     )}
                   </div>
@@ -381,7 +387,7 @@ export function Explore() {
       )}
 
       <div>
-        <div className="panel-header mb-2 rounded">探索历史</div>
+        <div className="panel-header mb-2 rounded">{t('探索历史')}</div>
         {historyLoading ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
@@ -391,8 +397,8 @@ export function Explore() {
         ) : explorations.length === 0 ? (
           <EmptyState
             icon={Compass}
-            title="暂无探索记录"
-            description="输入研究方向或留空进行全局探索，AI 将分析知识覆盖、缺口并给出研究建议。"
+            title={t('暂无探索记录')}
+            description={t('输入研究方向或留空进行全局探索，AI 将分析知识覆盖、缺口并给出研究建议。')}
           />
         ) : (
           <DataList
@@ -406,10 +412,10 @@ export function Explore() {
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="删除探索记录"
-        description={deleteTarget ? `确定删除「${deleteTarget.direction || '全局探索'}」？` : ''}
+        title={t('删除探索记录')}
+        description={deleteTarget ? t('确定删除「{direction}」？', { direction: deleteTarget.direction || t('全局探索') }) : ''}
         variant="danger"
-        confirmLabel="删除"
+        confirmLabel={t('删除')}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />

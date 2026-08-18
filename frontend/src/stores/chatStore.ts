@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { t } from '@/i18n'
 
 export interface SavedPage {
   slug: string
@@ -80,7 +81,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   startNew: () => {
     const newConv: Conversation = {
       id: generateId(),
-      title: '新对话',
+      title: t('新对话'),
       messages: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -106,8 +107,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       ...conv,
       messages: updatedMessages,
       updatedAt: new Date().toISOString(),
-      title: conv.title === '新对话' && msg.role === 'user'
-        ? msg.content.slice(0, 20) || '新对话'
+      title: (conv.title === '新对话' || conv.title === t('新对话')) && msg.role === 'user'
+        ? msg.content.slice(0, 20) || t('新对话')
         : conv.title,
     }
     const updatedConversations = [updatedConv, ...conversations.filter((c) => c.id !== currentId)]

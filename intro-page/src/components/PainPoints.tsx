@@ -1,4 +1,5 @@
 import { Reveal } from './Reveal'
+import { useT } from '../i18n'
 
 const pains = [
   { title: '知识沉寂', desc: '文档越堆越多，检索靠关键词，找得到却读不完，读完也难提炼出结论。' },
@@ -8,12 +9,14 @@ const pains = [
 ]
 
 export default function PainPoints() {
+  const t = useT()
+
   return (
     <section className="container-page py-24">
       <Reveal>
-        <h2 className="text-3xl font-bold tracking-tight">传统知识库之痛</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{t('传统知识库之痛')}</h2>
         <p className="mt-3 max-w-[60ch] text-lg text-text-secondary">
-          当信息不再稀缺，真正稀缺的是洞察力、方向感，以及把信息转化为行动的能力。
+          {t('当信息不再稀缺，真正稀缺的是洞察力、方向感，以及把信息转化为行动的能力。')}
         </p>
       </Reveal>
 
@@ -21,8 +24,8 @@ export default function PainPoints() {
         {pains.map((p, i) => (
           <Reveal key={p.title} delay={i * 60}>
             <div className="h-full rounded-lg border border-line bg-surface p-4 transition-all hover:-translate-y-1 hover:border-accent hover:shadow-lg">
-              <h3 className="text-lg font-medium text-text-primary">{p.title}</h3>
-              <p className="mt-1.5 text-base leading-relaxed text-text-tertiary">{p.desc}</p>
+              <h3 className="text-lg font-medium text-text-primary">{t(p.title)}</h3>
+              <p className="mt-1.5 text-base leading-relaxed text-text-tertiary">{t(p.desc)}</p>
             </div>
           </Reveal>
         ))}

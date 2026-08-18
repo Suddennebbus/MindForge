@@ -4,6 +4,7 @@ import { api } from '@/api/client'
 import cytoscape from 'cytoscape'
 import { Search, X } from 'lucide-react'
 import { useThemeStore } from '@/stores/themeStore'
+import { useT } from '@/i18n'
 
 interface GraphNode {
   id: string
@@ -37,6 +38,7 @@ const themeColors = {
 }
 
 export function WikiGraph({ focusSlug }: { focusSlug?: string | null }) {
+  const t = useT()
   const containerRef = useRef<HTMLDivElement>(null)
   const cyRef = useRef<cytoscape.Core | null>(null)
   const navigate = useNavigate()
@@ -270,7 +272,7 @@ export function WikiGraph({ focusSlug }: { focusSlug?: string | null }) {
   if (nodes.length === 0) {
     return (
       <div className="h-[60vh] flex items-center justify-center text-text-tertiary">
-        <p>知识库为空，暂无图谱可展示</p>
+        <p>{t('知识库为空，暂无图谱可展示')}</p>
       </div>
     )
   }
@@ -284,7 +286,7 @@ export function WikiGraph({ focusSlug }: { focusSlug?: string | null }) {
       />
       {displayed.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center text-text-tertiary text-sm pointer-events-none">
-          {query ? '无匹配结点，换个关键词试试' : '该页面暂无关联页面'}
+          {query ? t('无匹配结点，换个关键词试试') : t('该页面暂无关联页面')}
         </div>
       )}
       <div className="absolute top-3 left-3 flex items-center gap-2">
@@ -294,13 +296,13 @@ export function WikiGraph({ focusSlug }: { focusSlug?: string | null }) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="筛选结点（标题 / slug）…"
+            placeholder={t('筛选结点（标题 / slug）…')}
             className="input h-7 pl-7 pr-6 text-xs w-52"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              aria-label="清除筛选"
+              aria-label={t('清除筛选')}
               className="absolute right-1.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
             >
               <X size={12} />
@@ -309,7 +311,7 @@ export function WikiGraph({ focusSlug }: { focusSlug?: string | null }) {
         </div>
         {query && (
           <span className="text-[11px] text-text-tertiary bg-surface/80 px-1.5 py-0.5 rounded-sm backdrop-blur-sm">
-            匹配 {matched.size} 页
+            {t('匹配 {n} 页', { n: matched.size })}
           </span>
         )}
       </div>
@@ -318,7 +320,7 @@ export function WikiGraph({ focusSlug }: { focusSlug?: string | null }) {
           onClick={() => cyRef.current?.fit(cyRef.current.elements(), 40)}
           className="btn-secondary text-xs !h-7 !px-2"
         >
-          重置视图
+          {t('重置视图')}
         </button>
       </div>
       <div className="absolute bottom-3 right-3 flex flex-col gap-1">
@@ -333,7 +335,7 @@ export function WikiGraph({ focusSlug }: { focusSlug?: string | null }) {
             )
           }}
           className="btn-secondary text-xs !h-7 !w-7 flex items-center justify-center"
-          title="放大"
+          title={t('放大')}
         >
           +
         </button>
@@ -348,7 +350,7 @@ export function WikiGraph({ focusSlug }: { focusSlug?: string | null }) {
             )
           }}
           className="btn-secondary text-xs !h-7 !w-7 flex items-center justify-center"
-          title="缩小"
+          title={t('缩小')}
         >
           −
         </button>
@@ -356,15 +358,15 @@ export function WikiGraph({ focusSlug }: { focusSlug?: string | null }) {
       <div className="absolute bottom-3 left-3 flex gap-3 text-xs text-text-muted bg-surface/80 px-2 py-1 rounded-sm backdrop-blur-sm">
         <span className="flex items-center gap-1">
           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: typeColors.entity }} />
-          实体
+          {t('实体')}
         </span>
         <span className="flex items-center gap-1">
           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: typeColors.concept }} />
-          概念
+          {t('概念')}
         </span>
         <span className="flex items-center gap-1">
           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: typeColors.synthesis }} />
-          综合
+          {t('综合')}
         </span>
       </div>
     </div>

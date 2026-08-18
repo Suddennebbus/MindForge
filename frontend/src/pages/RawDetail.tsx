@@ -11,6 +11,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { IngestPlanDialog, type IngestPlanGroup, type IngestPlanPage } from '@/components/IngestPlanDialog'
 import { toast } from '@/stores/toastStore'
 import { useTaskStore } from '@/stores/taskStore'
+import { useT } from '@/i18n'
 
 interface IngestPlan {
   session_id: string
@@ -43,6 +44,7 @@ const statusLabel: Record<string, { label: string; variant: 'default' | 'active'
 }
 
 export function RawDetail() {
+  const t = useT()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [file, setFile] = useState<RawFile | null>(null)
@@ -82,8 +84,8 @@ export function RawDetail() {
           if (plannedPolls >= 8 && !refiring) {
             if (refires >= 2) {
               clearInterval(timer)
-              useTaskStore.getState().failTask(taskKey, '生成无法启动（触发请求多次丢失），请重新确认摄入')
-              toast({ title: '生成无法启动', description: '触发请求多次丢失，请重新发起摄入', variant: 'error' })
+              useTaskStore.getState().failTask(taskKey, t('生成无法启动（触发请求多次丢失），请重新确认摄入'))
+              toast({ title: t('生成无法启动'), description: t('触发请求多次丢失，请重新发起摄入'), variant: 'error' })
               return
             }
             refiring = true
@@ -91,7 +93,7 @@ export function RawDetail() {
             plannedPolls = 0
             try {
               await api.post(`/ai/ingest/sessions/${sessionId}/generate`, { pages }, { timeout: 15000 })
-              toast({ title: '生成触发丢失，已自动重试', variant: 'warning' })
+              toast({ title: t('生成触发丢失，已自动重试'), variant: 'warning' })
             } catch {
               // 补发失败（如任务实际已启动）静默，下轮继续观察
             } finally {
@@ -107,8 +109,8 @@ export function RawDetail() {
           const ok = (p?.page_results || []).filter((r: any) => r.status === 'ok').length
           const failed = (p?.page_results || []).filter((r: any) => r.status === 'error').length
           toast({
-            title: '摄入完成',
-            description: `已生成/完善 ${ok} 个页面${failed > 0 ? `，${failed} 个失败` : ''}`,
+            title: t('摄入完成'),
+            description: t('已生成/完善 {ok} 个页面', { ok }) + (failed > 0 ? t('，{failed} 个失败', { failed }) : ''),
             variant: failed > 0 ? 'warning' : 'success',
           })
           loadData()
@@ -116,7 +118,7 @@ export function RawDetail() {
           clearInterval(timer)
           useTaskStore.getState().failTask(taskKey, error || status)
           toast({
-            title: status === 'cancelled' ? '摄入已取消' : '摄入失败',
+            title: status === 'cancelled' ? t('摄入已取消') : t('摄入失败'),
             description: error || undefined,
             variant: status === 'cancelled' ? 'warning' : 'error',
           })
@@ -154,7 +156,7 @@ export function RawDetail() {
       loadData()
     } catch (err: any) {
       toast({
-        title: '评论失败',
+        title: t('评论失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -170,7 +172,7 @@ export function RawDetail() {
       loadData()
     } catch (err: any) {
       toast({
-        title: '回复失败',
+        title: t('回复失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -185,13 +187,13 @@ export function RawDetail() {
       const resp = await api.post('/ai/ingest/plan', { raw_file_id: id })
       const data = resp.data as IngestPlan
       if (!data.pages || data.pages.length === 0) {
-        toast({ title: 'AI 未规划出任何页面', description: '资料内容可能为空或无法解析', variant: 'warning' })
+        toast({ title: t('AI 未规划出任何页面'), description: t('资料内容可能为空或无法解析'), variant: 'warning' })
         return
       }
       setPlan(data)
     } catch (err: any) {
       toast({
-        title: '摄入规划失败',
+        title: t('摄入规划失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -214,7 +216,7 @@ export function RawDetail() {
       useTaskStore.getState().startTask(taskKey, { sessionId: plan.session_id, pages })
     } catch (err: any) {
       toast({
-        title: '启动生成失败',
+        title: t('启动生成失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -235,10 +237,10 @@ export function RawDetail() {
     try {
       await api.delete(`/raw/${id}/comments/${deleteCommentId}`)
       loadData()
-      toast({ title: '评论已删除', variant: 'success' })
+      toast({ title: t('评论已删除'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '删除失败',
+        title: t('删除失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -272,10 +274,10 @@ export function RawDetail() {
   if (!file) {
     return (
       <div className="py-12 text-center text-text-tertiary">
-        <p>文件不存在</p>
+        <p>{t('文件不存在')}</p>
         <button onClick={() => navigate('/raw')} className="btn-secondary mt-4 h-8 px-3 text-xs">
           <ArrowLeft size={14} className="mr-1.5" />
-          返回列表
+          {t('返回列表')}
         </button>
       </div>
     )
@@ -289,7 +291,7 @@ export function RawDetail() {
         icon={FileArchive}
         meta={
           <StatusBadge variant={statusLabel[file.status]?.variant || 'default'}>
-            {statusLabel[file.status]?.label || file.status}
+            {statusLabel[file.status]?.label ? t(statusLabel[file.status].label) : file.status}
           </StatusBadge>
         }
         actions={
@@ -297,7 +299,7 @@ export function RawDetail() {
             <Link
               to="/raw"
               className="btn-ghost h-8 w-8 !px-0 flex items-center justify-center"
-              aria-label="返回"
+              aria-label={t('返回')}
             >
               <ArrowLeft size={15} strokeWidth={1.5} />
             </Link>
@@ -306,14 +308,14 @@ export function RawDetail() {
               className="btn-primary h-8 px-3 text-xs flex items-center gap-1.5"
             >
               <Download size={14} strokeWidth={1.5} />
-              下载
+              {t('下载')}
             </button>
             <button
               onClick={() => navigate(`/reader/${file.id}?type=raw`)}
               className="btn-secondary h-8 px-3 text-xs flex items-center gap-1.5"
             >
               <BookOpen size={14} strokeWidth={1.5} />
-              阅读
+              {t('阅读')}
             </button>
             <button
               onClick={handleIngest}
@@ -326,12 +328,12 @@ export function RawDetail() {
                 <RefreshCw size={14} strokeWidth={1.5} />
               )}
               {planning
-                ? '规划中…'
+                ? t('规划中…')
                 : generating
-                  ? '摄入中…'
+                  ? t('摄入中…')
                   : file.status === 'ingested'
-                    ? '更新 Wiki'
-                    : '摄入知识库'}
+                    ? t('更新 Wiki')
+                    : t('摄入知识库')}
             </button>
           </>
         }
@@ -348,9 +350,9 @@ export function RawDetail() {
               ) : (
                 <AlertCircle size={14} strokeWidth={1.5} className="text-accent-red" />
               )}
-              已生成 {progress?.done ?? 0}/{progress?.total ?? '…'} 页
+              {t('已生成 {done}/{total} 页', { done: progress?.done ?? 0, total: progress?.total ?? '…' })}
               {generating && progress?.current_title && (
-                <span className="text-text-tertiary">（当前：{progress.current_title}）</span>
+                <span className="text-text-tertiary">{t('（当前：{title}）', { title: progress.current_title })}</span>
               )}
             </span>
             {!generating && (
@@ -361,7 +363,7 @@ export function RawDetail() {
                 }}
                 className="text-xs underline text-text-tertiary hover:text-text-primary"
               >
-                关闭
+                {t('关闭')}
               </button>
             )}
           </div>
@@ -382,7 +384,7 @@ export function RawDetail() {
                     to={`/wiki/${r.slug}`}
                     className="text-[11px] px-1.5 py-0.5 rounded-sm border border-accent-green/20 bg-accent-green/10 text-accent-green hover:underline"
                   >
-                    {r.action === 'enriched' ? '已完善' : '已建'} {r.title}
+                    {r.action === 'enriched' ? t('已完善') : t('已建')} {r.title}
                   </Link>
                 ) : r.status === 'error' ? (
                   <span
@@ -390,7 +392,7 @@ export function RawDetail() {
                     title={r.error}
                     className="text-[11px] px-1.5 py-0.5 rounded-sm border border-accent-red/20 bg-accent-red/10 text-accent-red"
                   >
-                    失败 {r.title}
+                    {t('失败 {title}', { title: r.title })}
                   </span>
                 ) : null,
               )}
@@ -402,21 +404,21 @@ export function RawDetail() {
       <PropertyList
         columns={2}
         properties={[
-          { label: '大小', value: `${(file.file_size / 1024).toFixed(1)} KB` },
-          { label: '类型', value: file.mime_type || '未知' },
+          { label: t('大小'), value: `${(file.file_size / 1024).toFixed(1)} KB` },
+          { label: t('类型'), value: file.mime_type || t('未知') },
           {
-            label: '所在文件夹',
-            value: file.category ? `raw/${file.category}/` : 'raw/（根目录）',
+            label: t('所在文件夹'),
+            value: file.category ? `raw/${file.category}/` : t('raw/（根目录）'),
             fullWidth: true,
           },
-          { label: '上传时间', value: file.created_at.slice(0, 10) },
-          { label: '状态', value: statusLabel[file.status]?.label || file.status },
+          { label: t('上传时间'), value: file.created_at.slice(0, 10) },
+          { label: t('状态'), value: statusLabel[file.status]?.label ? t(statusLabel[file.status].label) : file.status },
         ]}
       />
 
       {file.status === 'ingested' && file.wiki_pages.length > 0 && (
         <div className="border border-subtle rounded bg-surface p-4">
-          <span className="text-[11px] uppercase tracking-wider text-text-tertiary">关联 Wiki</span>
+          <span className="text-[11px] uppercase tracking-wider text-text-tertiary">{t('关联 Wiki')}</span>
           <div className="mt-2 flex flex-wrap gap-2">
             {file.wiki_pages.map((page) => (
               <Link
@@ -434,7 +436,7 @@ export function RawDetail() {
 
       <div className="border border-subtle rounded bg-surface overflow-hidden">
         <div className="px-4 h-10 flex items-center border-b border-subtle bg-raised/30">
-          <span className="text-xs font-medium uppercase tracking-wider text-text-tertiary">讨论 ({comments.length})</span>
+          <span className="text-xs font-medium uppercase tracking-wider text-text-tertiary">{t('讨论 ({count})', { count: comments.length })}</span>
         </div>
         <div className="p-4 space-y-3">
           <CommentThread
@@ -459,7 +461,7 @@ export function RawDetail() {
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSubmitComment()}
-              placeholder="输入评论..."
+              placeholder={t('输入评论...')}
               className="input flex-1"
             />
             <button onClick={handleSubmitComment} className="btn-primary h-8 px-3">
@@ -471,10 +473,10 @@ export function RawDetail() {
 
       <ConfirmDialog
         open={!!deleteCommentId}
-        title="删除评论"
-        description="确定删除这条评论？"
+        title={t('删除评论')}
+        description={t('确定删除这条评论？')}
         variant="danger"
-        confirmLabel="删除"
+        confirmLabel={t('删除')}
         onConfirm={handleDeleteComment}
         onCancel={() => setDeleteCommentId(null)}
       />
@@ -518,9 +520,10 @@ function CommentThread({
   user: { id: string; role: string } | null
   isAdmin: boolean
 }) {
+  const t = useT()
   const topLevel = comments.filter((c) => !c.parent_id)
   if (topLevel.length === 0) {
-    return <p className="text-sm text-text-muted text-center py-4">暂无评论，发表第一条评论吧</p>
+    return <p className="text-sm text-text-muted text-center py-4">{t('暂无评论，发表第一条评论吧')}</p>
   }
 
   return (
@@ -546,7 +549,7 @@ function CommentThread({
                     className="text-xs text-text-muted hover:text-accent-cyan flex items-center gap-1 transition-colors"
                   >
                     <MessageCircle size={11} strokeWidth={1.5} />
-                    回复
+                    {t('回复')}
                   </button>
                   {canDelete && (
                     <button
@@ -554,7 +557,7 @@ function CommentThread({
                       className="text-xs text-text-muted hover:text-accent-red flex items-center gap-1 transition-colors"
                     >
                       <Trash2 size={11} strokeWidth={1.5} />
-                      删除
+                      {t('删除')}
                     </button>
                   )}
                 </div>
@@ -565,7 +568,7 @@ function CommentThread({
                       value={replyText}
                       onChange={(e) => onReplyTextChange(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && onSubmitReply(c.id)}
-                      placeholder={`回复 ${c.username}...`}
+                      placeholder={t('回复 {username}...', { username: c.username })}
                       className="input flex-1"
                       autoFocus
                     />
@@ -573,7 +576,7 @@ function CommentThread({
                       <Send size={14} strokeWidth={1.5} />
                     </button>
                     <button onClick={onCancelReply} className="btn-ghost h-8 px-2 text-xs">
-                      取消
+                      {t('取消')}
                     </button>
                   </div>
                 )}
@@ -598,7 +601,7 @@ function CommentThread({
                                 className="text-xs text-text-muted hover:text-accent-red flex items-center gap-1 mt-0.5 transition-colors"
                               >
                                 <Trash2 size={10} strokeWidth={1.5} />
-                                删除
+                                {t('删除')}
                               </button>
                             )}
                           </div>

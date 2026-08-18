@@ -1,9 +1,11 @@
 import { Plus, MessageSquare, Trash2, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useState } from 'react'
 import { useChatStore } from '@/stores/chatStore'
+import { useT } from '@/i18n'
 import { ConfirmDialog } from './ConfirmDialog'
 
 export function ChatHistory() {
+  const t = useT()
   const { conversations, currentId, startNew, loadConversation, deleteConversation } = useChatStore()
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState(false)
@@ -20,16 +22,16 @@ export function ChatHistory() {
         <button
           onClick={() => setCollapsed(false)}
           className="p-1.5 rounded text-text-muted hover:text-text-secondary hover:bg-hover transition-colors"
-          aria-label="展开对话列表"
-          title="展开对话列表"
+          aria-label={t('展开对话列表')}
+          title={t('展开对话列表')}
         >
           <PanelLeftOpen size={15} strokeWidth={1.5} />
         </button>
         <button
           onClick={startNew}
           className="p-1.5 rounded text-text-muted hover:text-text-secondary hover:bg-hover transition-colors"
-          aria-label="新对话"
-          title="新对话"
+          aria-label={t('新对话')}
+          title={t('新对话')}
         >
           <Plus size={15} strokeWidth={1.5} />
         </button>
@@ -45,13 +47,13 @@ export function ChatHistory() {
           className="btn-primary flex-1 h-8 text-xs flex items-center justify-center gap-1.5"
         >
           <Plus size={14} strokeWidth={1.5} />
-          新对话
+          {t('新对话')}
         </button>
         <button
           onClick={() => setCollapsed(true)}
           className="shrink-0 p-1.5 rounded text-text-muted hover:text-text-secondary hover:bg-hover transition-colors"
-          aria-label="收起对话列表"
-          title="收起对话列表"
+          aria-label={t('收起对话列表')}
+          title={t('收起对话列表')}
         >
           <PanelLeftClose size={15} strokeWidth={1.5} />
         </button>
@@ -75,23 +77,23 @@ export function ChatHistory() {
                 setDeleteId(conv.id)
               }}
               className="opacity-0 group-hover:opacity-100 p-1 rounded hover:text-accent-red hover:bg-accent-red/10 text-text-tertiary transition-all"
-              aria-label="删除"
+              aria-label={t('删除')}
             >
               <Trash2 size={12} strokeWidth={1.5} />
             </button>
           </div>
         ))}
         {conversations.length === 0 && (
-          <p className="text-xs text-text-muted text-center py-4">暂无历史对话</p>
+          <p className="text-xs text-text-muted text-center py-4">{t('暂无历史对话')}</p>
         )}
       </div>
 
       <ConfirmDialog
         open={!!deleteId}
-        title="删除对话"
-        description="确定删除此对话？"
+        title={t('删除对话')}
+        description={t('确定删除此对话？')}
         variant="danger"
-        confirmLabel="删除"
+        confirmLabel={t('删除')}
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
       />

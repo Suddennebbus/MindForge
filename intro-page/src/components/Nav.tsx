@@ -1,5 +1,6 @@
-import { Star } from 'lucide-react'
+import { Star, Languages } from 'lucide-react'
 import { GITHUB_URL, ZHIHU_URL, DOCS_URL } from '../constants'
+import { useT, useLang, toggleLang } from '../i18n'
 
 const links = [
   { label: 'GitHub', href: GITHUB_URL },
@@ -8,6 +9,9 @@ const links = [
 ]
 
 export default function Nav() {
+  const t = useT()
+  const lang = useLang()
+
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-base/80 backdrop-blur">
       <nav className="container-page flex h-16 items-center justify-between">
@@ -23,7 +27,7 @@ export default function Nav() {
               href={l.href}
               className="rounded-md px-3 py-2 text-lg text-text-secondary transition-colors hover:text-text-primary"
             >
-              {l.label}
+              {t(l.label)}
             </a>
           ))}
           <a
@@ -33,6 +37,14 @@ export default function Nav() {
             <Star size={15} strokeWidth={2} />
             Star
           </a>
+          <button
+            onClick={toggleLang}
+            title={t('切换语言')}
+            className="inline-flex items-center gap-1.5 rounded-md border border-line px-3 py-2 text-lg text-text-secondary transition-colors hover:text-text-primary"
+          >
+            <Languages size={15} strokeWidth={2} />
+            {lang === 'zh' ? 'EN' : '中文'}
+          </button>
         </div>
       </nav>
     </header>

@@ -24,6 +24,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { StatusBadge } from '@/components/StatusBadge'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { toast } from '@/stores/toastStore'
+import { useT } from '@/i18n'
 
 const statusLabel: Record<string, { label: string; variant: 'default' | 'active' | 'success' | 'warning' | 'muted' | 'danger' }> = {
   pending: { label: '待入库', variant: 'warning' },
@@ -36,6 +37,7 @@ const statusLabel: Record<string, { label: string; variant: 'default' | 'active'
 }
 
 export function HumanOutputs() {
+  const t = useT()
   const [files, setFiles] = useState<HumanOutput[]>([])
   const [preRawFiles, setPreRawFiles] = useState<RawFile[]>([])
   const [ingestingId, setIngestingId] = useState<string | null>(null)
@@ -88,10 +90,10 @@ export function HumanOutputs() {
       setSelectedFile(null)
       setCategory('')
       loadFiles()
-      toast({ title: '上传成功', variant: 'success' })
+      toast({ title: t('上传成功'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '上传失败',
+        title: t('上传失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -103,10 +105,10 @@ export function HumanOutputs() {
     try {
       await api.patch(`/raw/human-outputs/${id}/status`, { status })
       loadFiles()
-      toast({ title: '状态已更新', variant: 'success' })
+      toast({ title: t('状态已更新'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '状态更新失败',
+        title: t('状态更新失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -118,10 +120,10 @@ export function HumanOutputs() {
     try {
       await api.delete(`/raw/human-outputs/${deleteTarget.id}`)
       loadFiles()
-      toast({ title: '已删除', variant: 'success' })
+      toast({ title: t('已删除'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '删除失败',
+        title: t('删除失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -136,10 +138,10 @@ export function HumanOutputs() {
     try {
       await api.post(`/raw/human-outputs/${id}/ingest`)
       loadFiles()
-      toast({ title: '已入库', variant: 'success' })
+      toast({ title: t('已入库'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '入库失败',
+        title: t('入库失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -178,8 +180,8 @@ export function HumanOutputs() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="人类产出"
-        description="管理人类撰写的文档与最终产出。"
+        title={t('人类产出')}
+        description={t('管理人类撰写的文档与最终产出。')}
         icon={FileText}
         actions={
           user && (
@@ -189,7 +191,7 @@ export function HumanOutputs() {
                 className="btn-primary h-8 px-3 text-xs flex items-center gap-1.5"
               >
                 <Upload size={14} strokeWidth={1.5} />
-                上传文档
+                {t('上传文档')}
               </button>
               <input ref={fileInput} type="file" className="hidden" onChange={handleFileSelect} />
             </>
@@ -206,7 +208,7 @@ export function HumanOutputs() {
           }} />
           <div className="relative w-full max-w-md rounded-lg border border-subtle bg-surface shadow-xl p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-text-primary">上传文档</h3>
+              <h3 className="text-sm font-medium text-text-primary">{t('上传文档')}</h3>
               <button
                 onClick={() => {
                   setUploadModalOpen(false)
@@ -224,14 +226,14 @@ export function HumanOutputs() {
             </div>
 
             <div className="mb-4">
-              <label className="block text-[11px] uppercase tracking-wider text-text-tertiary mb-1.5">所属领域（文件夹）</label>
+              <label className="block text-[11px] uppercase tracking-wider text-text-tertiary mb-1.5">{t('所属领域（文件夹）')}</label>
               <div className="relative">
                 <Tag size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
                 <input
                   type="text"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  placeholder="输入文件夹名称（可选），留空存入根目录"
+                  placeholder={t('输入文件夹名称（可选），留空存入根目录')}
                   className="input w-full pl-8"
                 />
               </div>
@@ -239,7 +241,7 @@ export function HumanOutputs() {
                 <div className="mt-2 space-y-2">
                   {preRawCategories.length > 0 && (
                     <div>
-                      <p className="text-xs text-text-muted mb-1.5">待入库文件夹：</p>
+                      <p className="text-xs text-text-muted mb-1.5">{t('待入库文件夹：')}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {preRawCategories.map((c) => (
                           <button
@@ -259,7 +261,7 @@ export function HumanOutputs() {
                   )}
                   {humanCategories.length > 0 && (
                     <div>
-                      <p className="text-xs text-text-muted mb-1.5">人类产出已有文件夹：</p>
+                      <p className="text-xs text-text-muted mb-1.5">{t('人类产出已有文件夹：')}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {humanCategories.map((c) => (
                           <button
@@ -281,8 +283,8 @@ export function HumanOutputs() {
               )}
               <p className="text-xs text-text-muted mt-1.5">
                 {category.trim()
-                  ? `将存入文件夹：human_outputs/${category.trim()}/`
-                  : '将存入根目录：human_outputs/'}
+                  ? t('将存入文件夹：human_outputs/{cat}/', { cat: category.trim() })
+                  : t('将存入根目录：human_outputs/')}
               </p>
             </div>
 
@@ -295,7 +297,7 @@ export function HumanOutputs() {
                 }}
                 className="btn-ghost h-8 px-3 text-xs"
               >
-                取消
+                {t('取消')}
               </button>
               <button
                 onClick={handleUpload}
@@ -305,12 +307,12 @@ export function HumanOutputs() {
                 {uploading ? (
                   <>
                     <Loader2 size={14} strokeWidth={1.5} className="mr-1.5 animate-spin" />
-                    上传中…
+                    {t('上传中…')}
                   </>
                 ) : (
                   <>
                     <Upload size={14} strokeWidth={1.5} className="mr-1.5" />
-                    确认上传
+                    {t('确认上传')}
                   </>
                 )}
               </button>
@@ -321,8 +323,8 @@ export function HumanOutputs() {
 
       {files.length === 0 ? (
         <EmptyState
-          title="暂无人类产出文档"
-          description="上传文档开始管理人类产出"
+          title={t('暂无人类产出文档')}
+          description={t('上传文档开始管理人类产出')}
           icon={FilePlus}
           action={
             user ? (
@@ -331,7 +333,7 @@ export function HumanOutputs() {
                 className="btn-primary h-8 px-3 text-xs flex items-center gap-1.5"
               >
                 <Upload size={14} strokeWidth={1.5} />
-                上传文档
+                {t('上传文档')}
               </button>
             ) : undefined
           }
@@ -340,7 +342,7 @@ export function HumanOutputs() {
         <div className="space-y-3">
           {categories.map((cat) => {
             const isUncategorized = cat === '__uncategorized__'
-            const displayName = isUncategorized ? '根目录' : cat
+            const displayName = isUncategorized ? t('根目录') : cat
             const isExpanded = expandedCategories.has(cat)
             const catFiles = grouped[cat]
             return (
@@ -370,7 +372,7 @@ export function HumanOutputs() {
                           <div className="flex items-center gap-2">
                             <p className="text-sm text-text-primary truncate">{f.original_name}</p>
                             <StatusBadge variant={statusLabel[f.status]?.variant || 'default'}>
-                              {statusLabel[f.status]?.label || f.status}
+                              {t(statusLabel[f.status]?.label || f.status)}
                             </StatusBadge>
                           </div>
                           <p className="text-xs font-mono text-text-tertiary mt-0.5">
@@ -390,7 +392,7 @@ export function HumanOutputs() {
                                     ? 'text-accent-cyan'
                                     : 'text-text-tertiary hover:text-accent-cyan hover:bg-hover'
                                 }`}
-                                title="观望"
+                                title={t('观望')}
                               >
                                 <Eye size={14} strokeWidth={1.5} />
                               </button>
@@ -404,7 +406,7 @@ export function HumanOutputs() {
                                     ? 'text-accent-red'
                                     : 'text-text-tertiary hover:text-accent-red hover:bg-accent-red/10'
                                 }`}
-                                title="弃用"
+                                title={t('弃用')}
                               >
                                 <XCircle size={14} strokeWidth={1.5} />
                               </button>
@@ -415,7 +417,7 @@ export function HumanOutputs() {
                                 }}
                                 disabled={ingestingId === f.id}
                                 className="h-8 w-8 flex items-center justify-center rounded text-accent-green hover:bg-accent-green/10 disabled:opacity-50 transition-colors"
-                                title="入库"
+                                title={t('入库')}
                               >
                                 {ingestingId === f.id ? (
                                   <Loader2 size={14} strokeWidth={1.5} className="animate-spin" />
@@ -429,7 +431,7 @@ export function HumanOutputs() {
                                   setDeleteTarget(f)
                                 }}
                                 className="h-8 w-8 flex items-center justify-center rounded text-text-tertiary hover:text-accent-red hover:bg-accent-red/10 transition-colors"
-                                title="删除"
+                                title={t('删除')}
                               >
                                 <Trash2 size={14} strokeWidth={1.5} />
                               </button>
@@ -449,10 +451,10 @@ export function HumanOutputs() {
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="删除文档"
-        description={deleteTarget ? `确定删除「${deleteTarget.original_name}」？此操作不可恢复。` : ''}
+        title={t('删除文档')}
+        description={deleteTarget ? t('确定删除「{name}」？此操作不可恢复。', { name: deleteTarget.original_name }) : ''}
         variant="danger"
-        confirmLabel="删除"
+        confirmLabel={t('删除')}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />

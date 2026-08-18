@@ -67,6 +67,7 @@ async def step_query_expansion(ctx: dict, config: Any) -> dict:
         direction, answers,
         exploration_result=exploration_result,
         recommendation=recommendation,
+        lang=ctx.get("lang", "zh"),
     )
     run_id = ctx.get("_run_id")
     response = await _llm_completion_text(config, messages, max_tokens=1024, run_id=run_id)
@@ -174,7 +175,8 @@ async def step_analysis(ctx: dict, config: Any) -> dict:
 
     messages = prompts.interview_plan.build_research_analysis_messages(
         direction, answers, wiki_content, web_results, arxiv_results,
-        exploration_result=exploration_result, recommendation=recommendation
+        exploration_result=exploration_result, recommendation=recommendation,
+        lang=ctx.get("lang", "zh"),
     )
     run_id = ctx.get("_run_id")
     analysis_response = await _llm_completion_text(config, messages, max_tokens=PLAN_LONG_OUTPUT_MAX_TOKENS, run_id=run_id)
@@ -200,7 +202,8 @@ async def step_plan_draft(ctx: dict, config: Any) -> dict:
         direction, wiki_content,
         research_analysis=analysis_response,
         output_type=output_type,
-        exploration_result=exploration_result, recommendation=recommendation
+        exploration_result=exploration_result, recommendation=recommendation,
+        lang=ctx.get("lang", "zh"),
     )
     run_id = ctx.get("_run_id")
     plan_response = await _llm_completion_text(config, messages, max_tokens=PLAN_LONG_OUTPUT_MAX_TOKENS, run_id=run_id)
@@ -220,7 +223,8 @@ async def step_critique(ctx: dict, config: Any) -> dict:
     messages = prompts.interview_plan.build_plan_critique_messages(
         direction, json.dumps(plan_data, ensure_ascii=False),
         research_analysis=analysis_response,
-        output_type=output_type
+        output_type=output_type,
+        lang=ctx.get("lang", "zh"),
     )
     run_id = ctx.get("_run_id")
     critique_response = await _llm_completion_text(config, messages, max_tokens=4096, run_id=run_id)
@@ -242,7 +246,8 @@ async def step_revision(ctx: dict, config: Any) -> dict:
         direction, json.dumps(plan_data, ensure_ascii=False),
         json.dumps(critique_json, ensure_ascii=False),
         research_analysis=analysis_response,
-        output_type=output_type
+        output_type=output_type,
+        lang=ctx.get("lang", "zh"),
     )
     run_id = ctx.get("_run_id")
     revision_response = await _llm_completion_text(config, messages, max_tokens=PLAN_LONG_OUTPUT_MAX_TOKENS, run_id=run_id)
@@ -268,7 +273,8 @@ async def step_reading_selection(ctx: dict, config: Any) -> dict:
         return await _llm_completion_text(config, messages, max_tokens=2048, run_id=run_id)
 
     readings = await reading_service.select_readings(
-        direction, plan_context, web_results, arxiv_results, llm_call
+        direction, plan_context, web_results, arxiv_results, llm_call,
+        lang=ctx.get("lang", "zh"),
     )
     return {"suggested_readings": readings}
 

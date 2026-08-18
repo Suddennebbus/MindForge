@@ -1,3 +1,5 @@
+from app.ai.lang import lang_instruction
+
 LINT_SYSTEM = """你是 MindForge 的体检助手。扫描 wiki 内容，检测问题并生成体检报告。
 
 检查项：
@@ -27,7 +29,7 @@ LINT_SYSTEM = """你是 MindForge 的体检助手。扫描 wiki 内容，检测�
 }"""
 
 
-def build_lint_messages(pages: list[dict]) -> list:
+def build_lint_messages(pages: list[dict], lang: str = "zh") -> list:
     parts = []
     for p in pages:
         tags = ", ".join(p.get("tags") or [])
@@ -42,6 +44,6 @@ def build_lint_messages(pages: list[dict]) -> list:
         )
     content = "\n\n---\n\n".join(parts)[:20000]
     return [
-        {"role": "system", "content": LINT_SYSTEM},
+        {"role": "system", "content": LINT_SYSTEM + lang_instruction(lang)},
         {"role": "user", "content": f"Wiki 内容：\n\n{content}"},
     ]

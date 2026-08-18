@@ -17,6 +17,8 @@ import {
   ScrollText,
 } from 'lucide-react'
 import { ThemeToggle } from './ThemeToggle'
+import { LangToggle } from './LangToggle'
+import { useT } from '@/i18n'
 
 interface NavItem {
   path: string
@@ -56,6 +58,14 @@ const groups: Group[] = [
   },
 ]
 
+function useGroups(): Group[] {
+  const t = useT()
+  return groups.map((g) => ({
+    label: t(g.label),
+    items: g.items.map((i) => ({ ...i, label: t(i.label) })),
+  }))
+}
+
 interface SidebarProps {
   collapsed: boolean
   onToggle: () => void
@@ -64,6 +74,8 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const location = useLocation()
   const logout = useAuthStore((s) => s.logout)
+  const t = useT()
+  const groups = useGroups()
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/'
@@ -118,37 +130,38 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </nav>
 
       <div className={`py-2 border-t border-subtle space-y-0.5 ${collapsed ? 'px-1.5' : 'px-2'}`}>
-        <Link to="/settings" title="设置" className={`nav-item ${collapsed ? '!px-0 justify-center' : ''}`}>
+        <Link to="/settings" title={t('设置')} className={`nav-item ${collapsed ? '!px-0 justify-center' : ''}`}>
           <Settings size={15} strokeWidth={1.5} />
-          {!collapsed && <span>设置</span>}
+          {!collapsed && <span>{t('设置')}</span>}
         </Link>
-        <Link to="/audit-log" title="操作日志" className={`nav-item ${collapsed ? '!px-0 justify-center' : ''}`}>
+        <Link to="/audit-log" title={t('操作日志')} className={`nav-item ${collapsed ? '!px-0 justify-center' : ''}`}>
           <ScrollText size={15} strokeWidth={1.5} />
-          {!collapsed && <span>操作日志</span>}
+          {!collapsed && <span>{t('操作日志')}</span>}
         </Link>
+        <LangToggle collapsed={collapsed} />
         <ThemeToggle collapsed={collapsed} />
         <button
           onClick={logout}
-          title="退出"
+          title={t('退出')}
           className={`nav-item w-full text-left ${collapsed ? '!px-0 justify-center' : ''}`}
         >
           <LogOut size={15} strokeWidth={1.5} />
-          {!collapsed && <span>退出</span>}
+          {!collapsed && <span>{t('退出')}</span>}
         </button>
         <button
           onClick={onToggle}
-          title={collapsed ? '展开侧边栏' : '收起侧边栏'}
+          title={collapsed ? t('展开侧边栏') : t('收起侧边栏')}
           className={`nav-item w-full text-left ${collapsed ? '!px-0 justify-center' : ''}`}
         >
           {collapsed ? (
             <>
               <PanelLeftOpen size={15} strokeWidth={1.5} />
-              <span className="hidden">展开</span>
+              <span className="hidden">{t('展开')}</span>
             </>
           ) : (
             <>
               <PanelLeftClose size={15} strokeWidth={1.5} />
-              <span>收起</span>
+              <span>{t('收起')}</span>
             </>
           )}
         </button>

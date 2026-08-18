@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useT } from '@/i18n'
 
 export interface Suggestion {
   type: string
@@ -61,17 +62,18 @@ export function IssueCard({
 
 /** 每条问题下的「原因 / 修复建议」说明行（标签加粗） */
 export function IssueMeta({ reason, suggestion }: { reason?: string; suggestion?: string }) {
+  const t = useT()
   if (!reason && !suggestion) return null
   return (
     <div className="mt-1 space-y-0.5">
       {reason && (
         <p className="text-small text-text-tertiary">
-          <span className="font-bold text-text-secondary">原因：</span>{reason}
+          <span className="font-bold text-text-secondary">{t('原因：')}</span>{reason}
         </p>
       )}
       {suggestion && (
         <p className="text-small text-text-tertiary">
-          <span className="font-bold text-text-secondary">修复建议：</span>{suggestion}
+          <span className="font-bold text-text-secondary">{t('修复建议：')}</span>{suggestion}
         </p>
       )}
     </div>
@@ -87,32 +89,34 @@ export function IssueActions({
   onDismiss: () => void
   pending?: boolean
 }) {
+  const t = useT()
   if (fixed) {
     return (
       <button disabled className="btn-teal mt-1.5 text-sm px-3 py-1 h-auto">
-        已修复
+        {t('已修复')}
       </button>
     )
   }
   return (
     <div className="mt-1.5 flex items-center gap-2">
       <button onClick={onFix} disabled={pending} className="btn-teal text-sm px-3 py-1 h-auto">
-        按建议修复
+        {t('按建议修复')}
       </button>
       <button onClick={onDismiss} disabled={pending} className="btn-dismiss px-2.5 py-1 h-auto">
-        忽略
+        {t('忽略')}
       </button>
     </div>
   )
 }
 
 export function SuggestionBlock({ suggestion }: { suggestion: Suggestion }) {
+  const t = useT()
   return (
     <div className="mt-2 p-2.5 bg-inset rounded-md border border-default/50">
       <p className="text-sm text-text-secondary">{suggestion.suggestion}</p>
       {suggestion.auto_fixable && (
         <span className="inline-block mt-1 text-xs text-accent-green bg-accent-green/10 px-1.5 py-0.5 rounded-sm">
-          可自动修复
+          {t('可自动修复')}
         </span>
       )}
     </div>

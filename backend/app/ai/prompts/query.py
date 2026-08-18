@@ -1,3 +1,5 @@
+from app.ai.lang import lang_instruction
+
 RETRIEVAL_SYSTEM = """你是 MindForge 的索引检索助手。根据用户问题和 Wiki 索引，选出最相关的页面 slug 列表。
 
 规则：
@@ -35,8 +37,23 @@ def build_retrieval_messages(index_content: str, question: str) -> list:
     ]
 
 
-def build_answer_messages(page_contents: str, question: str) -> list:
+def build_answer_messages(page_contents: str, question: str, lang: str = "zh") -> list:
+    system = ANSWER_SYSTEM
+    if lang == "en":
+        # 常量里的「使用中文」是硬指令，会与追加的英文指令冲突，先替换再追加
+        system = system.replace("6. 使用中文", "6. 使用英文")
+        # 提议行的格式模板是字面中文的，LLM 会原样照抄，英文模式替换成英文模板；
+        # 「」标题定界符保留不变，前端正则可以同时识别两种语言的提议行
+        system = system.replace(
+            "提议：可将上述内容保存为综合页面「标题」，<一句话说明汇总的维度/价值>。",
+            "Proposal: the above could be saved as a synthesis page 「Title」, <one sentence on the dimensions/value of the synthesis>.",
+        )
+        system = system.replace(
+            "（概念页提议同理：提议：可创建概念页面「标题」，<一句话说明>。）",
+            "(Same for concept pages: Proposal: a concept page 「Title」 could be created, <one sentence>.)",
+        )
+        system += lang_instruction(lang)
     return [
-        {"role": "system", "content": ANSWER_SYSTEM},
+        {"role": "system", "content": system},
         {"role": "user", "content": f"相关 Wiki 页面内容：\n\n{page_contents}\n\n用户问题：{question}"},
     ]

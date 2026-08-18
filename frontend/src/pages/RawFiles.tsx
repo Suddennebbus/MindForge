@@ -6,6 +6,7 @@ import { Download, FileArchive, ArrowRight, FolderOpen, ChevronDown, ChevronRigh
 import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
 import { StatusBadge } from '@/components/StatusBadge'
+import { useT } from '@/i18n'
 
 const statusLabel: Record<string, { label: string; variant: 'default' | 'active' | 'success' | 'warning' | 'muted' | 'danger' }> = {
   pending: { label: '待处理', variant: 'warning' },
@@ -15,6 +16,7 @@ const statusLabel: Record<string, { label: string; variant: 'default' | 'active'
 }
 
 export function RawFiles() {
+  const t = useT()
   const [files, setFiles] = useState<RawFile[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['__uncategorized__']))
@@ -69,27 +71,27 @@ export function RawFiles() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="已入库资料"
-        description="已审批并移动到 raw 目录的资料文件。"
+        title={t('已入库资料')}
+        description={t('已审批并移动到 raw 目录的资料文件。')}
         icon={FileArchive}
       />
 
       {loading ? (
         <div className="flex items-center justify-center h-64 text-text-tertiary">
           <Loader2 size={24} className="animate-spin mr-2" strokeWidth={1.5} />
-          加载中…
+          {t('加载中…')}
         </div>
       ) : files.length === 0 ? (
         <EmptyState
-          title="暂无已入库资料"
-          description="先在待入库中审批资料"
+          title={t('暂无已入库资料')}
+          description={t('先在待入库中审批资料')}
           icon={FileArchive}
         />
       ) : (
         <div className="space-y-3">
           {categories.map((cat) => {
             const isUncategorized = cat === '__uncategorized__'
-            const displayName = isUncategorized ? '根目录' : cat
+            const displayName = isUncategorized ? t('根目录') : cat
             const isExpanded = expandedCategories.has(cat)
             const catFiles = grouped[cat]
             return (
@@ -120,7 +122,7 @@ export function RawFiles() {
                           <div className="flex items-center gap-2">
                             <p className="text-sm text-text-primary truncate">{f.original_name}</p>
                             <StatusBadge variant={statusLabel[f.status]?.variant || 'default'}>
-                              {statusLabel[f.status]?.label || f.status}
+                              {t(statusLabel[f.status]?.label || f.status)}
                             </StatusBadge>
                           </div>
                           <p className="text-xs font-mono text-text-tertiary mt-0.5">
@@ -131,8 +133,8 @@ export function RawFiles() {
                           <button
                             onClick={(e) => handleDownload(e, f)}
                             className="h-8 w-8 flex items-center justify-center rounded hover:bg-hover text-text-tertiary hover:text-text-primary transition-colors"
-                            title="下载"
-                            aria-label="下载"
+                            title={t('下载')}
+                            aria-label={t('下载')}
                           >
                             <Download size={14} strokeWidth={1.5} />
                           </button>

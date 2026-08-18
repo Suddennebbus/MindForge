@@ -1,7 +1,11 @@
+from app.ai.lang import lang_instruction
+
+
 def build_interview_messages(
     direction: str,
     exploration_result: dict = None,
     recommendation: dict = None,
+    lang: str = "zh",
 ) -> list:
     system = """你是一个资深研究顾问。请根据用户提供的研究背景信息，以专业采访者的身份提出3-5个关键的澄清问题，帮助用户明确研究目标、范围、方法和预期产出。
 
@@ -85,7 +89,7 @@ def build_interview_messages(
     user = "\n".join(context_parts)
 
     return [
-        {"role": "system", "content": system},
+        {"role": "system", "content": system + lang_instruction(lang)},
         {"role": "user", "content": user},
     ]
 
@@ -143,6 +147,7 @@ def build_search_query_expansion_messages(
     answers: dict,
     exploration_result: dict = None,
     recommendation: dict = None,
+    lang: str = "zh",
 ) -> list:
     """Generate diverse search queries to collect richer external material."""
 
@@ -220,7 +225,7 @@ def build_search_query_expansion_messages(
     user = "\n".join(context_parts)
 
     return [
-        {"role": "system", "content": system},
+        {"role": "system", "content": system + lang_instruction(lang)},
         {"role": "user", "content": user},
     ]
 
@@ -252,6 +257,7 @@ def build_plan_critique_messages(
     plan_json_text: str,
     research_analysis: str,
     output_type: str = "plan",
+    lang: str = "zh",
 ) -> list:
     """Critique a generated plan against the research analysis and quality rubric."""
 
@@ -312,7 +318,7 @@ def build_plan_critique_messages(
 请严格评审这份{type_label}，输出 JSON 格式的评审结果。"""
 
     return [
-        {"role": "system", "content": system},
+        {"role": "system", "content": system + lang_instruction(lang)},
         {"role": "user", "content": user},
     ]
 
@@ -323,6 +329,7 @@ def build_plan_revision_messages(
     critique_json_text: str,
     research_analysis: str,
     output_type: str = "plan",
+    lang: str = "zh",
 ) -> list:
     """Revise a plan based on critique feedback."""
 
@@ -390,7 +397,7 @@ def build_plan_revision_messages(
 请基于评审意见，输出修订后的最终{type_label} JSON。"""
 
     return [
-        {"role": "system", "content": system},
+        {"role": "system", "content": system + lang_instruction(lang)},
         {"role": "user", "content": user},
     ]
 
@@ -403,6 +410,7 @@ def build_research_analysis_messages(
     arxiv_results: list[dict],
     exploration_result: dict = None,
     recommendation: dict = None,
+    lang: str = "zh",
 ) -> list:
     """Phase 1: Deep research analysis. Produces an analytical report, not a plan."""
 
@@ -502,7 +510,7 @@ def build_research_analysis_messages(
     user = "\n".join(user_parts)
 
     return [
-        {"role": "system", "content": system},
+        {"role": "system", "content": system + lang_instruction(lang)},
         {"role": "user", "content": user},
     ]
 
@@ -514,6 +522,7 @@ def build_create_plan_messages(
     output_type: str = "plan",
     exploration_result: dict = None,
     recommendation: dict = None,
+    lang: str = "zh",
 ) -> list:
     """Phase 2: Generate structured plan/document based solely on the research analysis.
 
@@ -679,6 +688,6 @@ def build_create_plan_messages(
     user = "\n".join(user_parts)
 
     return [
-        {"role": "system", "content": system},
+        {"role": "system", "content": system + lang_instruction(lang)},
         {"role": "user", "content": user},
     ]

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from typing import Optional
 
@@ -6,6 +6,7 @@ from app.database import get_db
 from app.auth.dependencies import get_current_user, require_role
 from app.auth.models import User
 from app.agents import orchestrator
+from app.ai.lang import get_ui_lang
 from app.agents.schemas import AgentRunCreate, AgentRunOut, AgentRunStepOut, AgentRunAction
 from app.agents.models import AgentRun
 
@@ -47,11 +48,12 @@ def _run_to_out(run: AgentRun) -> AgentRunOut:
 @router.post("/runs")
 async def create_run(
     data: AgentRunCreate,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin", "editor"))
 ):
     try:
-        run = await orchestrator.create_run(db, user, data)
+        run = await orchestrator.create_run(db, user, data, lang=get_ui_lang(request))
         return {"run_id": run.id, "status": run.status}
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))

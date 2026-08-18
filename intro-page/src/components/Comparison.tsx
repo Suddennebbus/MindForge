@@ -1,4 +1,5 @@
 import { Reveal } from './Reveal'
+import { useT } from '../i18n'
 
 const rows: { dim: string; others: [string, string, string]; mindforge: string }[] = [
   { dim: '知识形态', others: ['静态文档', '向量切片', '文档 + AI 润色'], mindforge: '结构化多页 Wiki 网络' },
@@ -13,12 +14,14 @@ const rows: { dim: string; others: [string, string, string]; mindforge: string }
 const cols = ['传统知识库', '通用 RAG 问答', '笔记型 AI', 'MindForge']
 
 export default function Comparison() {
+  const t = useT()
+
   return (
     <section className="container-page py-24">
       <Reveal>
-        <h2 className="text-3xl font-bold tracking-tight">与同类工具的差异</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{t('与同类工具的差异')}</h2>
         <p className="mt-3 max-w-[60ch] text-lg text-text-secondary">
-          MindForge 不是又一个「存文件」的知识库，而是会探索、会规划、会生长的研究助手。
+          {t('MindForge 不是又一个「存文件」的知识库，而是会探索、会规划、会生长的研究助手。')}
         </p>
       </Reveal>
 
@@ -27,10 +30,10 @@ export default function Comparison() {
           <table className="w-full min-w-[720px] text-lg">
             <thead>
               <tr className="border-b border-line bg-surface text-left">
-                <th className="px-4 py-3 font-medium text-text-secondary">维度</th>
+                <th className="px-4 py-3 font-medium text-text-secondary">{t('维度')}</th>
                 {cols.slice(0, 3).map((c) => (
                   <th key={c} className="px-4 py-3 font-medium text-text-tertiary">
-                    {c}
+                    {t(c)}
                   </th>
                 ))}
                 <th className="border-x-2 border-t-2 border-accent bg-accent/10 px-4 py-3 font-medium text-accent">
@@ -41,10 +44,10 @@ export default function Comparison() {
             <tbody>
               {rows.map((r, ri) => (
                 <tr key={r.dim} className="border-b border-line last:border-b-0">
-                  <td className="px-4 py-3 text-text-secondary">{r.dim}</td>
+                  <td className="px-4 py-3 text-text-secondary">{t(r.dim)}</td>
                   {r.others.map((v) => (
                     <td key={v} className="px-4 py-3 text-text-tertiary">
-                      {v}
+                      {t(v)}
                     </td>
                   ))}
                   <td
@@ -52,7 +55,7 @@ export default function Comparison() {
                       ri === rows.length - 1 ? 'border-b-2' : ''
                     }`}
                   >
-                    {r.mindforge}
+                    {t(r.mindforge)}
                   </td>
                 </tr>
               ))}

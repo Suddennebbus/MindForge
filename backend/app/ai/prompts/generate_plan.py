@@ -1,8 +1,11 @@
+from app.ai.lang import lang_instruction
+
 def build_generate_plan_messages(
     wiki_content: str,
     exploration_result: dict,
     selected_recommendation: dict,
     web_results: list[dict],
+    lang: str = "zh",
 ) -> list:
     web_summaries = "\n\n".join(
         f"[{i+1}] {r['title']}\n{r['href']}\n{r['body'][:500]}"
@@ -46,6 +49,6 @@ def build_generate_plan_messages(
 请基于以上所有信息，生成一个详细的研究计划。"""
 
     return [
-        {"role": "system", "content": system},
+        {"role": "system", "content": system + lang_instruction(lang)},
         {"role": "user", "content": user},
     ]

@@ -75,7 +75,7 @@ async def _create_and_start_run(
 from app.plans import storage as plans_storage
 
 
-async def create_run(db: Session, user: User, payload: AgentRunCreate) -> AgentRun:
+async def create_run(db: Session, user: User, payload: AgentRunCreate, lang: str = "zh") -> AgentRun:
     workflow = registry.get_workflow("plan_creation")
     if not workflow:
         raise ValueError("Workflow 'plan_creation' not registered")
@@ -87,6 +87,7 @@ async def create_run(db: Session, user: User, payload: AgentRunCreate) -> AgentR
         "answers": payload.answers,
         "exploration_result": payload.exploration_result,
         "recommendation": payload.recommendation,
+        "lang": lang,
     }
 
     title = payload.direction or "未命名研究计划"
@@ -114,12 +115,14 @@ async def create_run(db: Session, user: User, payload: AgentRunCreate) -> AgentR
     return await _create_and_start_run(db, user, plan.id, payload_dict)
 
 
-async def create_run_for_plan(db: Session, user: User, plan) -> AgentRun:
+async def create_run_for_plan(db: Session, user: User, plan, lang: str = "zh") -> AgentRun:
     """Continue generation for an existing pending_generation plan."""
     import json
     payload_dict = json.loads(plan.generation_payload_json or "{}")
     if not payload_dict:
         raise ValueError("Plan has no generation payload")
+    # 以本次请求的界面语言为准，允许用户切换语言后续跑
+    payload_dict["lang"] = lang
 
     plan.status = "pending_generation"
     plan.updated_at = beijing_now()

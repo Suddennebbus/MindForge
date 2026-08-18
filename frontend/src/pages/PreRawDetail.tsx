@@ -22,6 +22,7 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { PropertyList } from '@/components/PropertyList'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { toast } from '@/stores/toastStore'
+import { useT } from '@/i18n'
 
 interface Comment {
   id: string
@@ -41,6 +42,7 @@ const statusLabel: Record<string, { label: string; variant: 'default' | 'active'
 }
 
 export function PreRawDetail() {
+  const t = useT()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [file, setFile] = useState<RawFile | null>(null)
@@ -81,7 +83,7 @@ export function PreRawDetail() {
       loadData()
     } catch (err: any) {
       toast({
-        title: '评论失败',
+        title: t('评论失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -97,7 +99,7 @@ export function PreRawDetail() {
       loadData()
     } catch (err: any) {
       toast({
-        title: '回复失败',
+        title: t('回复失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -109,10 +111,10 @@ export function PreRawDetail() {
     try {
       await api.delete(`/raw/${id}/comments/${deleteCommentId}`)
       loadData()
-      toast({ title: '评论已删除', variant: 'success' })
+      toast({ title: t('评论已删除'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '删除失败',
+        title: t('删除失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -126,11 +128,11 @@ export function PreRawDetail() {
     setIngesting(true)
     try {
       await api.post(`/raw/pre-raw/${id}/approve`)
-      toast({ title: '资料已成功入库', variant: 'success' })
+      toast({ title: t('资料已成功入库'), variant: 'success' })
       setTimeout(() => navigate('/raw'), 800)
     } catch (err: any) {
       toast({
-        title: '入库失败',
+        title: t('入库失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -143,10 +145,10 @@ export function PreRawDetail() {
     try {
       await api.patch(`/raw/pre-raw/${id}/status`, { status })
       loadData()
-      toast({ title: '状态已更新', variant: 'success' })
+      toast({ title: t('状态已更新'), variant: 'success' })
     } catch (err: any) {
       toast({
-        title: '状态更新失败',
+        title: t('状态更新失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -157,11 +159,11 @@ export function PreRawDetail() {
     if (!id) return
     try {
       await api.delete(`/raw/pre-raw/${id}`)
-      toast({ title: '文档已删除', variant: 'success' })
+      toast({ title: t('文档已删除'), variant: 'success' })
       setTimeout(() => navigate('/pre-raw'), 800)
     } catch (err: any) {
       toast({
-        title: '删除失败',
+        title: t('删除失败'),
         description: err.response?.data?.detail || err.message,
         variant: 'error',
       })
@@ -195,10 +197,10 @@ export function PreRawDetail() {
   if (!file) {
     return (
       <div className="py-12 text-center text-text-tertiary">
-        <p>文件不存在</p>
+        <p>{t('文件不存在')}</p>
         <button onClick={() => navigate('/pre-raw')} className="btn-secondary mt-4 h-8 px-3 text-xs">
           <ArrowLeft size={14} className="mr-1.5" />
-          返回列表
+          {t('返回列表')}
         </button>
       </div>
     )
@@ -212,7 +214,7 @@ export function PreRawDetail() {
         icon={FilePlus}
         meta={
           <StatusBadge variant={statusLabel[file.status]?.variant || 'default'}>
-            {statusLabel[file.status]?.label || file.status}
+            {t(statusLabel[file.status]?.label || file.status)}
           </StatusBadge>
         }
         actions={
@@ -220,7 +222,7 @@ export function PreRawDetail() {
             <Link
               to="/pre-raw"
               className="btn-ghost h-8 w-8 !px-0 flex items-center justify-center"
-              aria-label="返回"
+              aria-label={t('返回')}
             >
               <ArrowLeft size={15} strokeWidth={1.5} />
             </Link>
@@ -229,14 +231,14 @@ export function PreRawDetail() {
               className="btn-primary h-8 px-3 text-xs flex items-center gap-1.5"
             >
               <Download size={14} strokeWidth={1.5} />
-              下载
+              {t('下载')}
             </button>
             <button
               onClick={() => navigate(`/reader/${file.id}?type=pre-raw`)}
               className="btn-secondary h-8 px-3 text-xs flex items-center gap-1.5"
             >
               <BookOpen size={14} strokeWidth={1.5} />
-              阅读
+              {t('阅读')}
             </button>
           </>
         }
@@ -245,14 +247,14 @@ export function PreRawDetail() {
       <PropertyList
         columns={2}
         properties={[
-          { label: '大小', value: `${(file.file_size / 1024).toFixed(1)} KB` },
-          { label: '类型', value: file.mime_type || '未知' },
+          { label: t('大小'), value: `${(file.file_size / 1024).toFixed(1)} KB` },
+          { label: t('类型'), value: file.mime_type || t('未知') },
           {
-            label: '所在文件夹',
-            value: file.category ? `pre_raw/${file.category}/` : 'pre_raw/（根目录）',
+            label: t('所在文件夹'),
+            value: file.category ? `pre_raw/${file.category}/` : t('pre_raw/（根目录）'),
             fullWidth: true,
           },
-          { label: '上传时间', value: file.created_at.slice(0, 10) },
+          { label: t('上传时间'), value: file.created_at.slice(0, 10) },
         ]}
       />
 
@@ -267,7 +269,7 @@ export function PreRawDetail() {
             }`}
           >
             <Eye size={14} strokeWidth={1.5} />
-            观望
+            {t('观望')}
           </button>
           <button
             onClick={handleApprove}
@@ -279,7 +281,7 @@ export function PreRawDetail() {
             ) : (
               <CheckCircle size={14} strokeWidth={1.5} />
             )}
-            {ingesting ? '入库中…' : '入库'}
+            {ingesting ? t('入库中…') : t('入库')}
           </button>
           <button
             onClick={() => handleStatusChange('discarded')}
@@ -290,21 +292,21 @@ export function PreRawDetail() {
             }`}
           >
             <XCircle size={14} strokeWidth={1.5} />
-            弃用
+            {t('弃用')}
           </button>
           <button
             onClick={() => setShowDeleteFile(true)}
             className="h-8 px-3 text-xs font-medium rounded border border-accent-red/20 text-accent-red hover:bg-accent-red/10 flex items-center gap-1.5 transition-colors"
           >
             <Trash2 size={14} strokeWidth={1.5} />
-            删除
+            {t('删除')}
           </button>
         </div>
       )}
 
       <div className="border border-subtle rounded bg-surface overflow-hidden">
         <div className="px-4 h-10 flex items-center border-b border-subtle bg-raised/30">
-          <span className="text-xs font-medium uppercase tracking-wider text-text-tertiary">讨论 ({comments.length})</span>
+          <span className="text-xs font-medium uppercase tracking-wider text-text-tertiary">{t('讨论 ({n})', { n: comments.length })}</span>
         </div>
         <div className="p-4 space-y-3">
           <CommentThread
@@ -329,7 +331,7 @@ export function PreRawDetail() {
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSubmitComment()}
-              placeholder="输入评论..."
+              placeholder={t('输入评论...')}
               className="input flex-1"
             />
             <button onClick={handleSubmitComment} className="btn-primary h-8 px-3">
@@ -341,20 +343,20 @@ export function PreRawDetail() {
 
       <ConfirmDialog
         open={!!deleteCommentId}
-        title="删除评论"
-        description="确定删除这条评论？"
+        title={t('删除评论')}
+        description={t('确定删除这条评论？')}
         variant="danger"
-        confirmLabel="删除"
+        confirmLabel={t('删除')}
         onConfirm={handleDeleteComment}
         onCancel={() => setDeleteCommentId(null)}
       />
 
       <ConfirmDialog
         open={showDeleteFile}
-        title="删除资料"
-        description={`确定删除「${file.original_name}」？此操作不可恢复。`}
+        title={t('删除资料')}
+        description={t('确定删除「{name}」？此操作不可恢复。', { name: file.original_name })}
         variant="danger"
-        confirmLabel="删除"
+        confirmLabel={t('删除')}
         onConfirm={handleDelete}
         onCancel={() => setShowDeleteFile(false)}
       />
@@ -385,9 +387,10 @@ function CommentThread({
   user: { id: string; role: string } | null
   isAdmin: boolean
 }) {
+  const t = useT()
   const topLevel = comments.filter((c) => !c.parent_id)
   if (topLevel.length === 0) {
-    return <p className="text-sm text-text-muted text-center py-4">暂无评论，发表第一条评论吧</p>
+    return <p className="text-sm text-text-muted text-center py-4">{t('暂无评论，发表第一条评论吧')}</p>
   }
 
   return (
@@ -413,7 +416,7 @@ function CommentThread({
                     className="text-xs text-text-muted hover:text-accent-cyan flex items-center gap-1 transition-colors"
                   >
                     <MessageCircle size={11} strokeWidth={1.5} />
-                    回复
+                    {t('回复')}
                   </button>
                   {canDelete && (
                     <button
@@ -421,7 +424,7 @@ function CommentThread({
                       className="text-xs text-text-muted hover:text-accent-red flex items-center gap-1 transition-colors"
                     >
                       <Trash2 size={11} strokeWidth={1.5} />
-                      删除
+                      {t('删除')}
                     </button>
                   )}
                 </div>
@@ -432,7 +435,7 @@ function CommentThread({
                       value={replyText}
                       onChange={(e) => onReplyTextChange(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && onSubmitReply(c.id)}
-                      placeholder={`回复 ${c.username}...`}
+                      placeholder={t('回复 {name}...', { name: c.username })}
                       className="input flex-1"
                       autoFocus
                     />
@@ -440,7 +443,7 @@ function CommentThread({
                       <Send size={14} strokeWidth={1.5} />
                     </button>
                     <button onClick={onCancelReply} className="btn-ghost h-8 px-2 text-xs">
-                      取消
+                      {t('取消')}
                     </button>
                   </div>
                 )}
@@ -465,7 +468,7 @@ function CommentThread({
                                 className="text-xs text-text-muted hover:text-accent-red flex items-center gap-1 mt-0.5 transition-colors"
                               >
                                 <Trash2 size={10} strokeWidth={1.5} />
-                                删除
+                                {t('删除')}
                               </button>
                             )}
                           </div>

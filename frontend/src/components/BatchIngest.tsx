@@ -5,6 +5,7 @@ import { api } from '@/api/client'
 import { IngestPlanDialog, type IngestPlanGroup, type IngestPlanPage } from '@/components/IngestPlanDialog'
 import { toast } from '@/stores/toastStore'
 import { useTaskStore } from '@/stores/taskStore'
+import { t, useT } from '@/i18n'
 
 interface BatchSession {
   session_id: string
@@ -56,9 +57,9 @@ async function runBatchPlan() {
     const data = resp.data as { sessions: BatchSession[]; errors: Array<{ filename: string; error: string }> }
     if (data.errors?.length) {
       toast({
-        title: `${data.errors.length} 份资料规划失败`,
+        title: t('{n} 份资料规划失败', { n: data.errors.length }),
         description: data.errors
-          .map((e) => `${e.filename}${e.error === 'no_pages_planned' ? '（未能规划出页面，可重试）' : ''}`)
+          .map((e) => `${e.filename}${e.error === 'no_pages_planned' ? t('（未能规划出页面，可重试）') : ''}`)
           .join('、'),
         variant: 'error',
       })
@@ -67,11 +68,11 @@ async function runBatchPlan() {
       if (!data.errors?.length) {
         // 真正没有任何待摄入资料：执行快照检查/恢复
         await api.post('/wiki/update-knowledge-base').catch(() => null)
-        toast({ title: '知识库已检查', description: '没有待摄入的资料', variant: 'success' })
+        toast({ title: t('知识库已检查'), description: t('没有待摄入的资料'), variant: 'success' })
         useTaskStore.getState().succeedTask(KB_TASK_KEY)
       } else {
         // 规划全部失败时不固化快照（同用户取消），下次仍会提醒恢复
-        useTaskStore.getState().failTask(KB_TASK_KEY, '全部资料规划失败')
+        useTaskStore.getState().failTask(KB_TASK_KEY, t('全部资料规划失败'))
       }
       return
     }
@@ -79,13 +80,13 @@ async function runBatchPlan() {
       phase: 'confirming',
       groups: data.sessions.map((s) => ({
         key: s.session_id,
-        label: s.reason === 'orphan' ? `${s.filename}（恢复已删页面）` : s.filename,
+        label: s.reason === 'orphan' ? `${s.filename}${t('（恢复已删页面）')}` : s.filename,
         pages: s.pages,
       })),
     })
   } catch (err: any) {
     const msg = err.response?.data?.detail || err.message
-    toast({ title: '摄入规划失败', description: msg, variant: 'error' })
+    toast({ title: t('摄入规划失败'), description: msg, variant: 'error' })
     useTaskStore.getState().failTask(KB_TASK_KEY, msg)
   }
 }
@@ -111,13 +112,13 @@ async function runBatchGeneration(confirmed: IngestPlanGroup[]) {
         if (status === 'planned') {
           plannedPolls += 1
           if (plannedPolls >= 8) {
-            if (refires >= 2) throw new Error(`「${g.label}」生成无法启动（触发请求多次丢失）`)
+            if (refires >= 2) throw new Error(t('「{label}」生成无法启动（触发请求多次丢失）', { label: g.label }))
             refires += 1
             plannedPolls = 0
             await api
               .post(`/ai/ingest/sessions/${g.key}/generate`, { pages: g.pages }, { timeout: 15000 })
               .catch(() => {})
-            toast({ title: '生成触发丢失，已自动重试', description: g.label, variant: 'warning' })
+            toast({ title: t('生成触发丢失，已自动重试'), description: g.label, variant: 'warning' })
           }
         } else {
           plannedPolls = 0
@@ -137,7 +138,7 @@ async function runBatchGeneration(confirmed: IngestPlanGroup[]) {
           ok += results.filter((r: any) => r.status === 'ok').length
           failed += results.filter((r: any) => r.status === 'error').length
           if (status === 'failed') {
-            toast({ title: `「${g.label}」摄入失败`, description: error || undefined, variant: 'error' })
+            toast({ title: t('「{label}」摄入失败', { label: g.label }), description: error || undefined, variant: 'error' })
           }
           break
         }
@@ -146,14 +147,14 @@ async function runBatchGeneration(confirmed: IngestPlanGroup[]) {
     // 摄入完成后做快照检查（恢复被删页面、更新 baseline）
     await api.post('/wiki/update-knowledge-base').catch(() => null)
     toast({
-      title: '知识库更新完成',
-      description: `已生成/完善 ${ok} 个页面${failed ? `，${failed} 个失败` : ''}`,
+      title: t('知识库更新完成'),
+      description: t('已生成/完善 {ok} 个页面', { ok }) + (failed ? t('，{n} 个失败', { n: failed }) : ''),
       variant: failed ? 'warning' : 'success',
     })
     useTaskStore.getState().succeedTask(KB_TASK_KEY)
   } catch (err: any) {
     const msg = err.response?.data?.detail || err.message
-    toast({ title: '摄入失败', description: msg, variant: 'error' })
+    toast({ title: t('摄入失败'), description: msg, variant: 'error' })
     useTaskStore.getState().failTask(KB_TASK_KEY, msg)
   }
 }
@@ -164,6 +165,7 @@ function cancelBatch(groups: IngestPlanGroup[]) {
 }
 
 export function useBatchIngest(onDone?: () => void) {
+  const t = useT()
   const task = useTaskStore((s) => s.tasks[KB_TASK_KEY])
   const [confirming, setConfirming] = useState(false)
   const busy = task?.status === 'running'
@@ -212,10 +214,16 @@ export function useBatchIngest(onDone?: () => void) {
       <div className="flex items-center gap-2 px-3 py-2 rounded border border-accent-cyan/20 bg-accent-cyan/10 text-accent-cyan text-sm">
         <Loader2 size={16} className="animate-spin" />
         {phase === 'planning'
-          ? '正在规划摄入页面…'
+          ? t('正在规划摄入页面…')
           : progress
-            ? `摄入中（${progress.fileIndex}/${progress.fileCount}：${progress.filename}）：已生成 ${progress.done}/${progress.total} 页${progress.current ? `（当前：${progress.current}）` : ''}`
-            : '摄入中…'}
+            ? t('摄入中（{fileIndex}/{fileCount}：{filename}）：已生成 {done}/{total} 页', {
+                fileIndex: progress.fileIndex,
+                fileCount: progress.fileCount,
+                filename: progress.filename,
+                done: progress.done,
+                total: progress.total,
+              }) + (progress.current ? t('（当前：{current}）', { current: progress.current }) : '')
+            : t('摄入中…')}
       </div>
     ) : null
 

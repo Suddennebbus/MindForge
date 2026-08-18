@@ -1,3 +1,5 @@
+from app.ai.lang import lang_instruction
+
 CHAT_INGEST_SYSTEM = """你是 MindForge 的 wiki 管理员。用户认可了一段 AI 对话回答的价值，需要你把它沉淀为知识库中的结构化 wiki 页面。
 
 ## 输入
@@ -59,9 +61,12 @@ summary: "一句话摘要"
 输出必须是纯 markdown（1 个页面），不要包含其他说明文字。"""
 
 
-def build_chat_ingest_messages(question: str, answer: str, existing_tags: list, suggested_title: str = "") -> list:
+def build_chat_ingest_messages(question: str, answer: str, existing_tags: list, suggested_title: str = "", lang: str = "zh") -> list:
     title_hint = f"\n\n建议页面标题（来自对话中的提议，可选用或优化）：{suggested_title}" if suggested_title else ""
+    system = CHAT_INGEST_SYSTEM
+    if lang == "en":
+        system = system.replace("5. **使用中文**。", "5. **使用英文**。") + lang_instruction(lang)
     return [
-        {"role": "system", "content": CHAT_INGEST_SYSTEM},
+        {"role": "system", "content": system},
         {"role": "user", "content": f"现有标签：{', '.join(existing_tags)}{title_hint}\n\n用户问题：{question}\n\nAI 回答：\n\n{answer[:30000]}"},
     ]

@@ -1,5 +1,6 @@
 import { X, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useT } from '@/i18n'
 
 export interface ConfirmDialogProps {
   open: boolean
@@ -16,12 +17,15 @@ export function ConfirmDialog({
   open,
   title,
   description,
-  confirmLabel = '确认',
-  cancelLabel = '取消',
+  confirmLabel,
+  cancelLabel,
   variant = 'default',
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const t = useT()
+  const confirmText = confirmLabel ?? t('确认')
+  const cancelText = cancelLabel ?? t('取消')
   if (!open) return null
 
   return (
@@ -47,7 +51,7 @@ export function ConfirmDialog({
           <button
             onClick={onCancel}
             className="shrink-0 p-1 rounded hover:bg-hover text-text-tertiary hover:text-text-primary transition-colors"
-            aria-label="关闭"
+            aria-label={t('关闭')}
           >
             <X size={16} strokeWidth={1.5} />
           </button>
@@ -57,7 +61,7 @@ export function ConfirmDialog({
             onClick={onCancel}
             className="btn-secondary h-8 px-3 text-sm"
           >
-            {cancelLabel}
+            {cancelText}
           </button>
           <button
             onClick={onConfirm}
@@ -68,7 +72,7 @@ export function ConfirmDialog({
                 : 'bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20 hover:bg-accent-cyan/20',
             )}
           >
-            {confirmLabel}
+            {confirmText}
           </button>
         </div>
       </div>

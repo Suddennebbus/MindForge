@@ -1,6 +1,7 @@
 import { X, CheckCircle2, AlertCircle, AlertTriangle, Info } from 'lucide-react'
 import { useToastStore } from '@/stores/toastStore'
 import { cn } from '@/lib/utils'
+import { useT } from '@/i18n'
 
 function ToastIcon({ variant }: { variant?: string }) {
   switch (variant) {
@@ -16,6 +17,7 @@ function ToastIcon({ variant }: { variant?: string }) {
 }
 
 function ToastItem({ toast }: { toast: { id: string; title: string; description?: string; variant?: string } }) {
+  const t = useT()
   const dismiss = useToastStore((s) => s.dismiss)
   const border =
     toast.variant === 'success'
@@ -46,7 +48,7 @@ function ToastItem({ toast }: { toast: { id: string; title: string; description?
         <button
           onClick={() => dismiss(toast.id)}
           className="shrink-0 p-1 rounded hover:bg-hover text-text-tertiary hover:text-text-primary transition-colors"
-          aria-label="关闭"
+          aria-label={t('关闭')}
         >
           <X size={14} strokeWidth={1.5} />
         </button>

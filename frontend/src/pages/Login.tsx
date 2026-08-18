@@ -2,7 +2,56 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { api } from '@/api/client'
-import { Hammer, Compass, Network, HeartPulse } from 'lucide-react'
+import { useT, useLangStore, type Lang } from '@/i18n'
+import { Hammer, Compass, Network, HeartPulse, Languages, ChevronDown, Check } from 'lucide-react'
+
+const langOptions: { value: Lang; label: string }[] = [
+  { value: 'zh', label: '中文' },
+  { value: 'en', label: 'English' },
+]
+
+function LangMenu() {
+  const t = useT()
+  const lang = useLangStore((s) => s.lang)
+  const setLang = useLangStore((s) => s.setLang)
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        title={t('切换语言')}
+        className="flex items-center gap-1.5 rounded-md border border-white/10 px-3 py-1.5 text-sm text-gray-300 transition-colors hover:border-white/20 hover:text-gray-50"
+      >
+        <Languages size={15} strokeWidth={1.5} />
+        {lang === 'zh' ? '中文' : 'English'}
+        <ChevronDown size={13} strokeWidth={1.5} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 z-20 mt-1.5 w-32 rounded-md border border-white/10 bg-[#14171f] py-1 shadow-lg">
+            {langOptions.map((o) => (
+              <button
+                key={o.value}
+                onClick={() => {
+                  setLang(o.value)
+                  setOpen(false)
+                }}
+                className={`flex w-full items-center justify-between px-3 py-2 text-sm transition-colors hover:bg-white/5 ${
+                  o.value === lang ? 'text-gray-50' : 'text-gray-400'
+                }`}
+              >
+                {o.label}
+                {o.value === lang && <Check size={13} strokeWidth={2} />}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
 
 // 四色图标方块取自系统既有 token 色相（cyan/green/entity紫/amber），与参考图的多色节奏一致
 const capabilities = [
@@ -33,6 +82,7 @@ const capabilities = [
 ]
 
 export function Login() {
+  const t = useT()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -51,7 +101,7 @@ export function Login() {
       setAuth(me.data, access_token)
       navigate(me.data.must_change_password ? '/change-password' : '/')
     } catch (err: any) {
-      setError(err.response?.data?.detail || '登录失败')
+      setError(err.response?.data?.detail || t('登录失败'))
     }
   }
 
@@ -69,10 +119,13 @@ export function Login() {
         }}
       />
 
-      {/* 顶栏：Logo + 字标 */}
-      <header className="relative flex items-center gap-3 px-8 lg:px-14 pt-7">
-        <img src="/logo.png" alt="MindForge" className="h-11 w-auto" />
-        <span className="text-2xl font-bold text-gray-50 tracking-tight">MindForge</span>
+      {/* 顶栏：Logo + 字标 + 语言选择 */}
+      <header className="relative flex items-center justify-between px-8 lg:px-14 pt-7">
+        <div className="flex items-center gap-3">
+          <img src="/logo.png" alt="MindForge" className="h-11 w-auto" />
+          <span className="text-2xl font-bold text-gray-50 tracking-tight">MindForge</span>
+        </div>
+        <LangMenu />
       </header>
 
       {/* 主体：左品牌叙事 / 右登录卡 */}
@@ -81,10 +134,10 @@ export function Login() {
           {/* 左侧 */}
           <div>
             <h1 className="text-3xl md:text-5xl font-bold text-gray-50 tracking-tight leading-tight xl:whitespace-nowrap">
-              MindForge，垂域知识铸造平台
+              {t('MindForge，垂域知识铸造平台')}
             </h1>
             <p className="mt-4 text-lg md:text-xl text-gray-400">
-              让知识持续生长，让研究方向主动浮现
+              {t('让知识持续生长，让研究方向主动浮现')}
             </p>
 
             <ul className="mt-10 space-y-6">
@@ -94,8 +147,8 @@ export function Login() {
                     <c.icon size={19} strokeWidth={1.5} />
                   </span>
                   <div>
-                    <div className="text-xl font-bold text-gray-100">{c.title}</div>
-                    <div className="mt-1 text-lg text-gray-500">{c.desc}</div>
+                    <div className="text-xl font-bold text-gray-100">{t(c.title)}</div>
+                    <div className="mt-1 text-lg text-gray-500">{t(c.desc)}</div>
                   </div>
                 </li>
               ))}
@@ -107,30 +160,30 @@ export function Login() {
             <div className="rounded-lg border border-white/10 bg-[#15181f]/90 backdrop-blur-sm p-8 shadow-[0_16px_48px_rgba(0,0,0,0.45)]">
               {error && (
                 <div className="mb-5 px-3.5 py-2.5 rounded-md bg-red-500/10 border border-red-500/25 text-base text-red-400">
-                  {error}
+                  {t(error)}
                 </div>
               )}
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-2">用户名</label>
+                  <label className="block text-sm font-medium text-gray-200 mb-2">{t('用户名')}</label>
                   <input
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="w-full h-11 px-3.5 rounded-md bg-[#1e222b] border border-white/10 text-[17px] text-gray-100 placeholder:text-gray-500 transition-colors focus:outline-none focus:border-[#0d9488] focus:ring-2 focus:ring-[#0d9488]/30"
-                    placeholder="输入用户名"
+                    placeholder={t('输入用户名')}
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-2">密码</label>
+                  <label className="block text-sm font-medium text-gray-200 mb-2">{t('密码')}</label>
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full h-11 px-3.5 rounded-md bg-[#1e222b] border border-white/10 text-[17px] text-gray-100 placeholder:text-gray-500 transition-colors focus:outline-none focus:border-[#0d9488] focus:ring-2 focus:ring-[#0d9488]/30"
-                    placeholder="输入密码"
+                    placeholder={t('输入密码')}
                     required
                   />
                 </div>
@@ -138,12 +191,12 @@ export function Login() {
                   type="submit"
                   className="w-full h-11 mt-1 rounded-md bg-[#0d9488] text-white text-[17px] font-semibold transition-all hover:bg-[#0f766e] active:scale-[0.98]"
                 >
-                  登录
+                  {t('登录')}
                 </button>
               </form>
 
               <div className="mt-6 text-center text-sm text-gray-500">
-                请联系管理员创建账号
+                {t('请联系管理员创建账号')}
               </div>
             </div>
           </div>
